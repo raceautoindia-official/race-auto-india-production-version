@@ -439,7 +439,7 @@ const MobileNavNew = () => {
             </div>
           </Link>
 
-          <Link href="/https://raceautoanalytics.com/forecast">
+          <Link href="https://raceautoanalytics.com/forecast">
             <div className={styles.navItem}>
               <BiLineChart color={iconColor} size={iconSize} title="Forecast" />
               <span className={styles.caption}>Forecast</span>
