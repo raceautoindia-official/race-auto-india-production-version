@@ -1,0 +1,156 @@
+.contact-us {
+  padding: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+  border-radius: 10px;
+
+  transition: all 1.3s ease;
+}
+
+/* Define the fade-in effect */
+/* Define the zoom-in effect */
+/* Shrink to Grow Effect */
+/* Grow Effect */
+@keyframes growEffect {
+  0% {
+    transform: scale(0.5); /* Start smaller */
+    opacity: 0;  /* Initially hidden */
+  }
+  100% {
+    transform: scale(1); /* End at normal size */
+    opacity: 1;  /* Fully visible */
+  }
+}
+
+/* Apply the grow effect to the envelope */
+.wrapper {
+  animation: growEffect 1.5s ease-in-out;
+}
+
+
+
+
+
+.default-margin {
+  margin-top: 175px;
+}
+
+.contact-us-move {
+  margin-top: 375px;
+}
+
+.contact-title {
+  text-align: center;
+  margin-bottom: 40px;
+  font-weight: 700;
+  color: #333;
+}
+
+
+
+.office-details {
+  flex-basis: 45%;
+  margin-bottom: 20px;
+}
+
+.office-details h3 {
+  margin-bottom: 15px;
+  color: #3d8bd0;
+}
+
+.office-details p {
+  line-height: 1.6;
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.map-container {
+  flex-basis: 50%;
+}
+
+.map-container h3 {
+  margin-bottom: 15px;
+  color: #3d8bd0;
+}
+
+.map-frame {
+  border: 4px solid #3d8bd0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.map-frame iframe {
+  width: 100%;
+  height: 350px;
+  border: none;
+}
+
+
+
+/* Center the form container */
+.contact-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  background: linear-gradient(to bottom right, #ffffff, #a3a3a3);
+  padding: 40px;
+}
+
+/* Card style */
+.contact-form-card {
+  background-color: #f3f3f3;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
+  width: 100%;
+}
+
+/* Form title style */
+.contact-title {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: bold;
+  text-align: left;
+}
+
+/* Scoped input styles for this form */
+.contact-input {
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  box-shadow: none;
+  height: 45px;
+  font-size: 0.9rem;
+  padding-left: 15px;
+}
+
+.contact-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Textarea style */
+.contact-input[type='textarea'] {
+  resize: none;
+  height: auto;
+}
+
+/* Submit button style */
+.submit-btn {
+  display: block;
+  margin: 20px auto 0 auto;
+  background-color: #007bff;
+  border: none;
+  border-radius: 20px;
+  width: 150px;
+  height: 40px;
+  font-weight: bold;
+  text-transform: uppercase;
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.submit-btn:hover {
+  background-color: #0056b3;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3);
+  transition: 0.3s;
+}

@@ -1,0 +1,44 @@
+
+  
+  /* Position each hexagon within the single image */
+  .hero-section .hex1 {
+    background-position: 0 0;
+  }
+  
+  .hero-section .hex2 {
+    background-position: -100px 0;
+  }
+  
+  .hero-section .hex3 {
+    background-position: -200px 0;
+  }
+  
+  .hero-section .hex4 {
+    background-position: -300px 0;
+  }
+  
+  .hero-section .hex5 {
+    background-position: -400px 0;
+  }
+  
+  
+.about_us_border {
+  position: relative;
+  padding-bottom: 5px; /* Space for the border */
+  text-align: center; /* Center-align the text */
+}
+
+.about_us_border::after {
+  content: '';
+  display: block;
+  width: 80%; /* Width of the bottom border */
+  border-bottom: 2px solid currentColor; /* Border style and color */
+  margin: 0 auto; /* Center the border */
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+}
+
+.text-justified {
+  text-align: justify;
+}

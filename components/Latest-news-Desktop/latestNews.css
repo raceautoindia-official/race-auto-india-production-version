@@ -1,0 +1,10 @@
+.latest-image {
+  transition: transform 0.5s;
+  object-fit: "cover";
+  border-radius: 0;
+}
+
+.latest-image:hover {
+  transform: scale(1.1);
+  overflow: hidden;
+}

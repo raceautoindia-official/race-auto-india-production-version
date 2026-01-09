@@ -1,0 +1,42 @@
+.image-container {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  aspect-ratio: 16/9;
+}
+
+.varient-image {
+  transition: transform 0.5s;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.varient-image:hover {
+  transform: scale(1.1);
+  overflow: hidden;
+}
+
+.market-heading:hover {
+  color: red;
+}
+
+.market-title:hover {
+  color: rgb(61, 61, 255);
+}
+
+
+
+
+.home_market_mobile {
+  display: none !important;
+}
+
+@media (max-width: 500px) {
+  .home_market_mobile {
+    display: block !important;
+  }
+
+  .home_market_desktop {
+    display: none !important;
+  }
+}

@@ -1,0 +1,70 @@
+.logo_buttons_container {
+  display: flex;
+  gap: 10px;
+}
+
+.facebook {
+  background-color: #1877f2;
+  color: white;
+}
+.twitter {
+  background-color: #1da1f2;
+  color: white;
+}
+.instagram {
+  background-color: #e4405f;
+  color: white;
+}
+.linkedin {
+  background-color: #0077b5;
+  color: white;
+}
+.whatsapp {
+  background-color: #25d366;
+  color: white;
+}
+.pinterest {
+  background-color: #bd081c;
+  color: white;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.whatsapp:hover {
+  background-color: white;
+  color: #25d366;
+}
+
+.youtube:hover {
+  background-color: white;
+  color: #ff0000;
+}
+
+.facebook:hover {
+  background-color: white;
+  color: #1877f2;
+}
+
+.twitter:hover {
+  background-color: white;
+  color: #1da1f2;
+}
+
+.instagram:hover {
+  background-color: white;
+  color: #e4405f;
+}
+
+.linkedin:hover {
+  background-color: white;
+  color: #0077b5;
+}
+
+.pinterest:hover {
+  background-color: white;
+  color: #bd081c;
+}

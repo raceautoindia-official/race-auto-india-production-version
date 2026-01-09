@@ -1,0 +1,29 @@
+
+
+.cardWrapper {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border: 2px solid transparent;
+  }
+  
+  .cardWrapper:hover {
+    transform: scale(1.05);
+  }
+  
+  .overlayText {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 4px 10px;
+    border-radius: 5px;
+  }
+  
+  .selected {
+    border-color: #0d6efd;
+  }
+  

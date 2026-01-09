@@ -1,0 +1,5 @@
+/* Add to subscriptioncards.css or global file */
+.my-quill .ql-editor p {
+  margin: 0 !important;
+  padding: 0 !important;
+}

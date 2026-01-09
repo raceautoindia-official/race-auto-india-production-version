@@ -1,0 +1,95 @@
+.e-magazine-xm {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 999;
+}
+
+.e-magazine-xm {
+  color: rgb(255, 255, 255);
+  background-color: #959595;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.e-magazine-xm .d-flex {
+  align-items: center;
+}
+
+.e-magazine-heading {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+}
+
+.e-magazine-xm .d-flex div:first-child {
+  font-size: 1.2em;
+  padding: 5px;
+  font-weight: bold;
+}
+
+.e-magazine-xm .d-flex div:last-child {
+  cursor: pointer;
+}
+
+.e-magazine-xm .d-flex justify-content-evenly {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.e-magazine-xm button {
+  font-size: 0.9em;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.e-magazine-xm hr {
+  margin: 5px;
+}
+
+@media (max-width: 1000px) {
+  .e-magazine-xm {
+    display: none;
+  }
+
+  .e-magazine-xm .d-flex.justify-content-evenly > div,
+  .e-magazine-xm button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .e-magazine-xm button {
+    margin-top: 10px;
+  }
+}
+
+.subscribe-button {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 900;
+  background-color: #ff1f23; /* Your button's background color */
+  color: #000000; /* Text color */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: transform 0.5s ease;
+}
+
+.subscribe-button:hover {
+  background-color: #ffffff; /* Hover color */
+  color: black;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.blink {
+  transform: scale(1.1);
+}

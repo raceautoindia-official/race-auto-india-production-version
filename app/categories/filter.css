@@ -1,0 +1,25 @@
+.filter-badge {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 2rem;
+  border: 1.5px solid #ccc;
+  background-color: #f9f9f9;
+  color: #333;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.filter-badge:hover {
+  background-color: #e0f0ff;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.filter-badge.active {
+  background-color: #007bff !important;
+  color: #fff !important;
+  border-color: #007bff;
+  font-weight: 600;
+}

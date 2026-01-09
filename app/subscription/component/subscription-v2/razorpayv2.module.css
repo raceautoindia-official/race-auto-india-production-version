@@ -1,0 +1,127 @@
+.paymentCard {
+  max-width: 420px;
+  margin: 0 auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.heading {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #333333;
+}
+
+.trustedTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #555555;
+}
+
+.trustedIcon {
+  font-size: 1.2rem;
+  color: #3399cc;
+}
+
+.summaryList {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  color: #444444;
+}
+
+.summaryList li {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.paymentMethods {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #555555;
+}
+
+.icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.icon {
+  font-size: 1.8rem;
+  transition: transform 0.2s;
+}
+
+.icon:hover {
+  transform: scale(1.1);
+}
+
+.googleIcon {
+  color: #4285f4;
+}
+
+.amazonIcon {
+  color: #ff9900;
+}
+
+.phonepeIcon {
+  color: #4d148c;
+}
+
+.visaIcon {
+  color: #1a1f71;
+}
+
+.mastercardIcon {
+  color: #eb001b;
+}
+
+.walletIcon {
+  color: #00bfa5;
+}
+
+.payButton {
+  width: 100%;
+  background-color: #3399cc;
+  border-color: #3399cc;
+  font-weight: 500;
+}
+
+.payButton:disabled {
+  background-color: #a0a0a0;
+  border-color: #a0a0a0;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.loadingBox {
+  background-color: #222222;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  color: #ffffff;
+  max-width: 250px;
+}

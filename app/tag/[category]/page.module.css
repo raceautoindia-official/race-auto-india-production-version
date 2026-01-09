@@ -1,0 +1,18 @@
+.card_heading_top {
+  font-weight: 1000;
+}
+
+.card_heading_top:hover {
+  color: rgb(186, 0, 0);
+}
+
+.postList_image_container {
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  position: relative;
+}
+
+.postList_image_container img:hover {
+  transform: scale(1.1);
+  transition: transform 0.5s;
+}

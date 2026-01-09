@@ -1,0 +1,42 @@
+/* styles.css or AdHeader.module.css */
+.ad_header {
+    display: block;
+  }
+  
+  @media (max-width: 767px) {
+    .ad_header {
+      display: none;
+    }
+  }
+  
+  .desktop_category
+
+  .desktop_category {
+    display: block;
+  }
+  
+  @media (max-width: 767px) {
+    .desktop_category {
+      display: none;
+    }
+  }
+
+
+  /* styles.module.css */
+.desktopOnly {
+  display: none;
+}
+
+.mobileOnly {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .desktopOnly {
+    display: block;
+  }
+
+  .mobileOnly {
+    display: none;
+  }
+}

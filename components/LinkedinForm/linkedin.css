@@ -1,0 +1,27 @@
+/*  */
+  
+.linkedin-cropped-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover; /* Cover the container */
+    object-position: center; /* Center the image */
+  }
+
+
+  /* linkedin.css */
+
+@media (max-width: 768px) {
+  .linkedin-heading {
+    font-size: 1rem !important;
+  }
+}
+
+.linkedin-image-container {
+  text-align: center;
+}
+
+.linkedin-cropped-image {
+  object-fit: contain;
+  max-width: 100%;
+  height: auto;
+}

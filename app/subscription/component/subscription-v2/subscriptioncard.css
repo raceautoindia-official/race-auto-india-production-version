@@ -1,0 +1,106 @@
+.active-badge {
+    position: absolute;
+    top: 12px;
+    right: 100px;
+    background-color: #282ea7;
+    color: white;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    z-index: 10;
+    animation: pulse 1.8s infinite;
+  }
+  
+  .active-plan {
+    border: 2px solid #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    animation: glow 1.8s ease-in-out infinite;
+  }
+  
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px rgba(40, 167, 69, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(40, 167, 69, 0.8);
+    }
+    100% {
+      box-shadow: 0 0 5px rgba(40, 167, 69, 0.4);
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .fake-price {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  
+
+@keyframes slideanimation {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+
+  .sparkled_badge {
+  background: linear-gradient(
+    120deg,
+    #f57c00 0%,
+    #fff3e0 50%,
+    #f57c00 100%
+  );
+  background-size: 200% auto;
+  animation: slideanimation 2s linear infinite;
+}
+
+.custom-tooltip {
+  font-size: 0.25rem !important;
+  background-color: #333 !important;
+  color: #fff !important;
+  font-size: 0.85rem !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  max-width: 240px;
+  text-align: left;
+  box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 9999 !important;
+}
+
+.react-tooltip {
+font-size: 0.8rem !important;
+padding-bottom: 0px !important;
+margin-bottom: 0px !important;
+margin-left: 0px !important;
+}
+
+.custom-tooltip p{
+  margin-top: 0px !important;
+  margin-bottom: 3px !important;
+}
+
+.custom-tooltip div{
+  padding-top: 0px !important;
+  
+}
+

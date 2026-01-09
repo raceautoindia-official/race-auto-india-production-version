@@ -1,0 +1,12 @@
+
+  
+
+  .latest__news-container:hover{
+    background-color: #000000;
+    color: white;
+    overflow: hidden;
+  }
+  
+  .latest__news-content{
+    font-weight: 800;
+  } 

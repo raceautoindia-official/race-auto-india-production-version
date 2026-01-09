@@ -1,0 +1,28 @@
+.subscription_menu_slide {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  position: fixed;
+  top: 30px;
+  left: 0px;
+  width: 100%;
+  min-height: 100vh; /* or whatever height you want */
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  background: white;
+  z-index: 10;
+  height: 100%;
+  /* padding: 1rem; */
+}
+
+/* Start hidden */
+.subscription_menu_hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Slide up on active */
+.subscription_menu_slideUp {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}

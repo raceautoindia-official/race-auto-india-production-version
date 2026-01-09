@@ -1,0 +1,151 @@
+/* Root variables for theme */
+:root {
+  --bg-page: #121212;
+  --bg-card: #1e1e1e;
+  --bg-input: #2a2a2e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a8a8a8;
+  --accent: #ffd54f;
+  --shadow-card: rgba(0, 0, 0, 0.7);
+  --radius: 8px;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Roboto', sans-serif;
+}
+
+/* Scope everything under .blog-page to avoid leaking into other pages */
+.blog-page {
+  background-color: var(--bg-page) !important;
+  min-height: 100vh;
+  font-family: var(--font-body);
+}
+
+/* Insight title */
+.blog-page .insight-title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Snippet text */
+.blog-page .insight-snippet {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 auto;
+}
+
+/* Read more link */
+.blog-page .read-more {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.blog-page .read-more:hover {
+  text-decoration: underline;
+}
+
+/* Card base styling */
+.blog-page .card {
+  background-color: var(--bg-card) !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 4px 20px var(--shadow-card) !important;
+}
+
+/* Form inputs & textarea */
+.blog-page .form-control,
+.blog-page .bg-dark.border-0 {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+}
+.blog-page .form-control::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+/* Buttons */
+.blog-page .btn-success {
+  background: linear-gradient(135deg, var(--accent) 0%, #e6c348 100%) !important;
+  border: none !important;
+  color: #121212 !important;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.2s ease;
+}
+.blog-page .btn-success:hover {
+  transform: translateY(-2px);
+}
+
+/* Outline-light variant override for reply button */
+.blog-page .btn-outline-light {
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.blog-page .btn-outline-light:hover {
+  background-color: var(--accent) !important;
+  color: #121212 !important;
+}
+
+/* User icon/text */
+.blog-page .user-icon {
+  color: var(--text-secondary) !important;
+}
+.blog-page .user-pic {
+  border: 2px solid var(--accent) !important;
+}
+
+/* Post text */
+.blog-page .post-text {
+  color: var(--text-primary) !important;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Preview containers */
+.blog-page .preview-container {
+  display: inline-block;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+.blog-page .preview-container img,
+.blog-page .preview-container video {
+  max-width: 150px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  display: block;
+}
+
+/* Reply card indent */
+.blog-page .reply-card {
+  background-color: var(--bg-card) !important;
+}
+
+/* Reply actions alignment */
+.blog-page .reply-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Link buttons inside cards */
+.blog-page .card .btn-link {
+  color: var(--text-secondary) !important;
+}
+.blog-page .card .btn-link.text-white {
+  color: var(--text-primary) !important;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .blog-page .insight-title {
+    font-size: 2rem;
+  }
+}

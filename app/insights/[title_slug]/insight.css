@@ -1,0 +1,63 @@
+a.text-decoration-none:hover {
+  text-decoration: underline;
+  color: #0d6efd;
+}
+
+.border-bottom h5 {
+  font-weight: 600;
+}
+
+.quill-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 1em 0;
+}
+
+.quill-content p {
+  text-align: justify;
+  line-height: 1.6;
+}
+
+.chat-floating-btn {
+  position: fixed;
+  bottom: 110px;
+  right: 20px;
+  z-index: 99;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-chat-overlay {
+  position: fixed;
+  inset: 0;
+  top:40px;
+  margin-bottom:70px;
+  z-index: 999;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* in your blog.css (or wherever you keep component-specific styles) */
+.linkedin-subscribe-btn {
+  background-color: #0A66C2;
+  border-color:    #0A66C2;
+  color:           #ffffff;
+  font-weight:     600;
+  border-radius:   4px;
+  padding:         0.5rem 1rem;
+  transition:      background-color 0.2s ease;
+}
+
+.linkedin-subscribe-btn:hover {
+  background-color: #084a9e;
+  border-color:    #084a9e;
+  color:           #ffffff;
+}

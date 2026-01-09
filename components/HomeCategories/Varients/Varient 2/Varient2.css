@@ -1,0 +1,17 @@
+.content-card2 h6 {
+  font-size: smaller;
+}
+
+@media only screen and (max-width: 600px) {
+  .content-card2 h6 {
+    font-size: 14px !important;
+  }
+
+  .content-card2 p {
+    font-size: 10px !important;
+  }
+}
+
+.card-text {
+  font-size: smaller;
+}

@@ -1,0 +1,49 @@
+.image-container {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  aspect-ratio: 16/9;
+}
+
+.varient-image {
+  transition: transform 0.5s;
+  object-fit: "cover";
+  border-radius: 0;
+}
+
+.varient-image:hover {
+  transform: scale(1.1);
+  overflow: hidden;
+}
+
+.card-heading {
+  font-weight: 400;
+}
+
+.card-heading:hover {
+  color: rgb(186, 0, 0);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-no-bg{
+  background-color: transparent;
+}
+
+
+.home_categories_mobile {
+  display: none !important;
+}
+
+@media (max-width: 500px) {
+  .home_categories_mobile {
+    display: block !important;
+  }
+
+  .home_categories_desktop {
+    display: none !important;
+  }
+}

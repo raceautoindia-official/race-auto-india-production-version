@@ -1,0 +1,236 @@
+'use client'
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react/no-unescaped-entities */
+import { useEffect, useRef, useState } from "react";
+import { Form, Button } from "react-bootstrap";
+import axios from "axios";
+import { toast } from "react-toastify";;
+import { Editor } from "@tinymce/tinymce-react";
+import { useParams } from "next/navigation";
+
+
+const AdminPageEdit = () => {
+  const { id } = useParams();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [keywords, setKeywords] = useState("");
+  const [parentLink, setParentLink] = useState<any>(7);
+  const [location, setLocation] = useState("top menu");
+  const [visibility, setVisibility] = useState<any>(0);
+  const [page_content, setpage_content] = useState("");
+  const editorRef = useRef<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleEditorChange = (editContent:any) => {
+    setpage_content(editContent);
+  };
+
+  const handleSubmit = async (e:any) => {
+    e.preventDefault();
+    setIsSubmitting(true)
+    const formData = { title, description, keywords, parent_id: parentLink, location, visibility, page_content };
+
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/pages/${id}`,
+        formData,
+      );
+      toast.success("Article updated", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+
+    } catch (err) {
+      toast.error("please try later", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+      console.log(err);
+      setIsSubmitting(false)
+    }
+  };
+
+  const formDetailApi = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/pages/${id}`
+      );
+
+      const data = res.data[0];
+      setTitle(data.title);
+      setDescription(data.description);
+      setKeywords(data.keywords);
+      setParentLink(data.parent_id);
+      setLocation(data.location);
+      setVisibility(data.visibility);
+      setpage_content(data.page_content);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    formDetailApi();
+  }, []);
+
+  return (
+    <div className="col-12">
+      <button
+        className="btn btn-secondary mt-3 ms-2"
+      >
+        Back
+      </button>
+      <div className="shadow-sm p-3 mb-5 mt-3 bg-white rounded border-0">
+        <div className="row">
+          <div className="col">
+            <Form.Group controlId="formTitle" className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="formDescription" className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="formKeywords" className="mb-3">
+              <Form.Label>Keywords</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter keywords"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group controlId="formParentLink" className="mb-3">
+              <Form.Label>Parent Link</Form.Label>
+              <Form.Control
+                as="select"
+                value={parentLink}
+                onChange={(e) => setParentLink(e.target.value)}
+              >
+                <option value={0}>None</option>
+                <option value={7}>More</option>
+                {/* Add other parent link options as needed */}
+              </Form.Control>
+            </Form.Group>
+            <Form.Group controlId="formLocation" className="mb-3">
+              <Form.Label>Location</Form.Label>
+              <div>
+                <Form.Check
+                  type="radio"
+                  label="Main Menu"
+                  value="main"
+                  checked={location === "main"}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                <Form.Check
+                  type="radio"
+                  label="Footer"
+                  value="footer"
+                  checked={location === "footer"}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                <Form.Check
+                  type="radio"
+                  label="Don't add in menu"
+                  value="none"
+                  checked={location === "none"}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+            </Form.Group>
+            <Form.Group controlId="formVisibility" className="mb-3">
+              <Form.Label>Visibility</Form.Label>
+              <div>
+                <Form.Check
+                  type="radio"
+                  label="Show"
+                  value={1}
+                  checked={visibility == 1}
+                  onChange={(e) => setVisibility(e.target.value)}
+                />
+                <Form.Check
+                  type="radio"
+                  label="Hide"
+                  value={0}
+                  checked={visibility == 0}
+                  onChange={(e) => setVisibility(e.target.value)}
+                />
+              </div>
+            </Form.Group>
+            <Form.Group controlId="formContent" className="mb-3">
+              <Form.Label>Content</Form.Label>
+              <Editor
+                  apiKey='3fr142nwyhd2jop9d509ekq6i2ks2u6dmrbgm8c74gu5xrml'
+                  onInit={(_evt, editor) => editorRef.current = editor}
+                  value={page_content}
+                  init={{
+                    height: 500,
+                    menubar: true,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                    file_picker_callback: (callback, value, meta) => {
+                      if (meta.filetype === 'image') {
+                        const input = document.createElement('input');
+                        input.setAttribute('type', 'file');
+                        input.setAttribute('accept', 'image/*');
+                        input.onchange = function () {
+                          const file = this.files[0];
+                          const reader:any = new FileReader();
+                          reader.onload = function () {
+                            const id = 'blobid' + (new Date()).getTime();
+                            const blobCache = editorRef.current.editorUpload.blobCache;
+                            const base64 = reader.result.split(',')[1];
+                            const blobInfo = blobCache.create(id, file, base64);
+                            blobCache.add(blobInfo);
+                            callback(blobInfo.blobUri(), { title: file.name });
+                          };
+                          reader.readAsDataURL(file);
+                        };
+                        input.click();
+                      }
+                    },
+                  }}
+                  onEditorChange={handleEditorChange}
+                />
+            </Form.Group>
+            <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? 'Updated' : 'Submit'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminPageEdit;

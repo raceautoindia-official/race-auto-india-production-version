@@ -1,0 +1,86 @@
+.pricing-card {
+    position: relative;
+    width: 300px;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    clip-path: path('M0,0 H85% Q100%,0 100%,20% V100% H0 Z');
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin: 1rem;
+  }
+  
+  .corner-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #fff;
+    border-radius: 50%;
+    padding: 0.3rem;
+    box-shadow: 0 0 4px rgba(0,0,0,0.2);
+  }
+  
+  .popular-badge {
+    position: absolute;
+    top: 1rem;
+    right: 4.5rem;
+    background: #28a745;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .plan-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  .plan-subtitle {
+    color: #555;
+    margin-bottom: 1rem;
+  }
+  
+  .plan-price {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .plan-price span {
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+  
+  .feature-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .feature-list .icon {
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+  }
+  
+  .unavailable {
+    color: #999;
+    opacity: 0.6;
+  }
+  
+  .buy-button {
+    display: block;
+    margin: 0 auto;
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 2rem;
+    font-size: 1rem;
+  }
+  
+
+ 

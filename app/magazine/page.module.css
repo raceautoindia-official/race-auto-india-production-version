@@ -1,0 +1,52 @@
+.magazinecard:hover {
+  -ms-transform: scale(1.1);
+  transform: scale(1.1);
+  -webkit-transform: scale(1.1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.magazinecard {
+  -webkit-box-shadow: 0px 0px 30px rgba(115, 128, 157, 0.1);
+  box-shadow: 0px 0px 30px rgba(115, 128, 157, 0.1);
+}
+
+.magazinecardcontainer {
+  overflow: hidden;
+}
+
+
+.button_category{
+  animation: shrinkGrow 1.5s infinite ease-in-out;
+}
+
+@keyframes shrinkGrow {
+  0% {
+    transform: scale(1); /* Original size */
+  }
+  50% {
+    transform: scale(1.1); /* Grow */
+  }
+  100% {
+    transform: scale(1); /* Back to original size */
+  }
+}
+
+
+.categoryButtonGroup {
+  padding: 0.5rem;
+}
+
+.categoryButton {
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px; /* Pill shape */
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.categoryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+

@@ -1,0 +1,133 @@
+.event__title {
+    font-family: "Roboto", sans-serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+  }
+  
+  .event__date {
+    font-family: "Roboto", sans-serif;
+    font-weight: 700;
+    color: #75757f;
+    font-size: 1.2rem;
+  }
+  
+  .event__summary {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    margin-bottom: 5px;
+    padding: 0;
+  }
+  
+  .event__location {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 0.9rem;
+  }
+  
+  .event__link {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: blue;
+    margin: 0;
+    padding: 0;
+  }
+  
+  @media screen and (max-width: 600px) {
+    .event__date {
+      margin-top: 20px;
+      font-family: "Roboto", sans-serif;
+      font-weight: 700;
+      color: #75757f;
+      font-size: 1rem;
+    }
+  
+    .event__link {
+      font-size: 0.9rem;
+      color: blue;
+      margin: 0;
+      padding: 0;
+    }
+  }
+  
+  @media screen and (max-width: 1024px) {
+    .event__date {
+      font-family: "Roboto", sans-serif;
+      font-weight: 700;
+      color: #75757f;
+      font-size: 1rem;
+    }
+    .event__summary {
+      font-family: "Roboto", sans-serif;
+      font-weight: 400;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+      padding: 0;
+    }
+  
+    .event__link {
+      font-size: 0.9rem;
+      color: blue;
+      margin: 0;
+      padding: 0;
+    }
+  }
+  
+  .linkedin-image-container {
+    width: 100%; /* Set your desired width */
+    height: 150px; /* Set your desired height */
+    overflow: hidden; /* Hide overflow */
+  }
+  
+  .linkedin-cropped-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover; /* Cover the container */
+    object-position: center; /* Center the image */
+  }
+  
+  .event_subscribe .col-md-8 {
+    border-left: 3px solid black;
+  }
+  
+  @media print, screen and (min-width: 64em) {
+    .event_subscribe .col-md-8 {
+      padding: 0 2rem 0 5rem;
+    }
+  }
+  
+  .subscribe-button-event {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 900;
+    background-color: #ff1f23; /* Your button's background color */
+    color: #000000; /* Text color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.5s ease;
+  }
+  
+  .subscribe-button-event:hover {
+    background-color: #ffffff; /* Hover color */
+    color: #ff1f23;
+  }
+  
+  
+  @keyframes blink {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  .blink {
+    transform: scale(1.0);
+  }
+  

@@ -1,0 +1,37 @@
+.custom-dropdown-btn {
+  background-color: #004080;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.custom-dropdown-btn:hover,
+.custom-dropdown-btn:focus {
+  background-color: #0066cc;
+  color: #fff;
+}
+
+.custom-dropdown-menu {
+  background-color: #f4f8fb;
+  border: 1px solid #cfe2f3;
+  border-radius: 8px;
+  min-width: 200px;
+  margin-top: 8px;
+  padding: 0.5rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.custom-dropdown-item {
+  color: #003366;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-dropdown-item:hover {
+  background-color: #d6e9f8;
+  color: #001f3f;
+}

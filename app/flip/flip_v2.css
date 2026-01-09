@@ -1,0 +1,428 @@
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media screen and (max-width: 480px) {
+  .react-pdf__Page {
+    width: 360px;
+    height: auto;
+  }
+
+  .react-pdf__Page__canvas {
+    height: auto !important;
+    width: 360px !important;
+  }
+
+  .react-pdf__Document {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+@media screen and (min-width: 481px) {
+  .react-pdf__Page {
+    width: 460px;
+    height: auto;
+  }
+
+  .react-pdf__Page__canvas {
+    height: auto !important;
+    width: 460px !important;
+  }
+
+  .react-pdf__Document {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 1250px) {
+  .magazine-slider {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1250px) and (max-width: 1500px) {
+  .magazine-slider {
+    /* position: 'absolute', minWidth:150, width:200, maxWidth: 150, height: 350 */
+    position: absolute;
+    left: 0;
+    margin-left: 5px;
+    margin-top: 5px;
+    min-width: 175px;
+    width: 250px;
+    max-width: 175px;
+    height: 350px;
+  }
+}
+
+/* style={{ position: 'absolute', left: 0, minWidth:200, width:300, maxWidth: 300, height: 500 }} */
+
+@media screen and (min-width: 1500px) {
+  .magazine-slider {
+    /* position: 'absolute', minWidth:150, width:200, maxWidth: 150, height: 350 */
+    position: absolute;
+    left: 0;
+    margin-left: 5px;
+
+    min-width: 200px;
+    width: 300px;
+    max-width: 300px;
+    height: 400px;
+  }
+}
+
+@media screen and (max-width: 1250px) {
+  .magazine-ad {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1250px) and (max-width: 1500px) {
+  .magazine-ad {
+    /* position: 'absolute', minWidth:150, width:200, maxWidth: 150, height: 350 */
+    position: absolute;
+    top: 1px;
+    right: 0;
+    width: 250px;
+    height: 250px;
+  }
+}
+
+/* style={{ position: 'absolute', left: 0, minWidth:200, width:300, maxWidth: 300, height: 500 }} */
+
+@media screen and (min-width: 1500px) {
+  .magazine-ad {
+    /* position: 'absolute', minWidth:150, width:200, maxWidth: 150, height: 350 */
+    position: absolute;
+    top: 1px;
+    right: 0;
+    min-width: 100px;
+    width: 300px;
+    max-width: 300px;
+    height: 300px;
+  }
+}
+
+.subscribeButton_magazine {
+  background-color: #ff6347; /* Tomato color */
+  color: #fff;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  animation: pulse 2s infinite ease-in-out; /* Pulsing animation */
+  transition: transform 0.3s ease;
+}
+
+/* Define the pulsing animation */
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 5px rgba(255, 99, 71, 0.7); /* Initial glow */
+  }
+  50% {
+    transform: scale(1.1); /* Slightly bigger */
+    box-shadow: 0 0 10 rgba(255, 99, 71, 1); /* Brighter glow */
+  }
+}
+
+.subscribeButton_magazine:hover {
+  /* background-color: white; */
+  color: black;
+}
+.page {
+  background: white;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-nav-button {
+  position: absolute;
+  top: 50%;
+  z-index: 1000;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 60px;
+  font-weight: 300;
+  color: #888;
+  transition: color 0.3s ease;
+  user-select: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.custom-nav-button.left {
+  left: 300px;
+}
+
+.custom-nav-button.right {
+  right: 300px;
+}
+
+.custom-nav-button:hover {
+  color: #32bea6;
+}
+/* flip_v2.css */
+.react-pdf__Page {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .custom-nav-button {
+    display: none !important;
+  }
+}
+/* flip_v2.css */
+
+/* Container centering if needed */
+.position-relative {
+  position: relative;
+}
+
+/* Flipbook page styling */
+.flip-page {
+  background-color: white;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+
+.custom-nav-button {
+  position: absolute;
+  top: 35%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: black;
+  font-size: 80px; /* even bigger arrows */
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s;
+  line-height: 1; /* avoids weird spacing on some fonts */
+}
+
+.custom-nav-button:hover {
+  color: #555; /* subtle hover effect */
+}
+
+.custom-nav-button.left {
+  left: 180px;
+}
+
+.custom-nav-button.right {
+  right: 220px;
+}
+/* flip_v2.css */
+
+/* Wrapper for flipbook: relative positioning for arrows */
+.flipbook-wrapper {
+  position: relative;
+  /* width is set inline via style={{ width: containerWidth }} */
+  margin: 0 auto;
+  overflow-x: auto; /* allow horizontal scroll if needed on small screens */
+}
+
+/* Each page in the flipbook */
+.flip-page {
+  background-color: white;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation arrows: always visible and positioned relative to .flipbook-wrapper */
+.custom-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  padding: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s;
+}
+.custom-nav-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+.custom-nav-button.left {
+  left: 5px; /* adjust if needed */
+}
+.custom-nav-button.right {
+  right: 5px;
+}
+
+/* Subscribe button styling */
+.subscribeButton_magazine {
+  background: #32bea6;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+@media (max-width: 400px) {
+  .custom-nav-button.left {
+    left: 2px;
+  }
+  .custom-nav-button.right {
+    right: 2px;
+  }
+}
+/* Flipbook wrapper */
+.flipbook-wrapper {
+  position: relative;
+  overflow: visible; /* Important: allows arrows to be visible */
+}
+
+/* Base arrow button style */
+.custom-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex !important; /* Force visible */
+  align-items: center;
+  justify-content: center;
+  font-size: 50px;
+  padding: 8px;
+  transition: background 0.2s ease;
+}
+
+.custom-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Default positions for desktop and larger screens */
+.custom-nav-button.left {
+  left: 16px;
+}
+.custom-nav-button.right {
+  right: 16px;
+}
+
+/* Tablet (<=1024px) */
+@media (max-width: 1024px) {
+  .custom-nav-button {
+    font-size: 45px;
+    padding: 6px;
+  }
+  .custom-nav-button.left {
+    left: 12px;
+  }
+  .custom-nav-button.right {
+    right: 12px;
+  }
+}
+
+/* Mobile (<=768px) */
+@media (max-width: 768px) {
+  .custom-nav-button {
+    font-size: 40px;
+    top: 45%;
+  }
+  .custom-nav-button.left {
+    left: 10px;
+  }
+  .custom-nav-button.right {
+    right: 10px;
+  }
+}
+
+/* Extra small screens (<=400px) */
+@media (max-width: 400px) {
+  .custom-nav-button {
+    font-size: 34px;
+  }
+  .custom-nav-button.left {
+    left: 6px;
+  }
+  .custom-nav-button.right {
+    right: 6px;
+  }
+}
+.circle-button {
+  width: 40px;
+  height: 40px;
+  background-color: #32bea6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  margin: 0 6px;
+}
+.circle-button {
+  width: 40px;
+  height: 40px;
+  background-color: #32bea6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  margin: 6px;
+  transition: background 0.2s;
+}
+
+.circle-button:hover {
+  background-color: #28a18e;
+}
+.custom-nav-button {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+.custom-nav-button.left {
+  left: 10px;
+}
+.custom-nav-button.right {
+  right: 10px;
+}
+.circle-button {
+  margin: 5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.3s;
+}
+
+.circle-button:hover {
+  background-color: #555;
+}
+

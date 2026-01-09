@@ -1,0 +1,172 @@
+/* PlanDetailsForm.css */
+
+.shake {
+    animation: shake 0.4s;
+    border: 2px solid red !important;
+    outline: none;
+    background-color: #ffe6e6; /* light red background */
+    border-radius: 4px;
+  }
+  
+  @keyframes shake {
+    0% { transform: translateX(0px); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-4px); }
+    100% { transform: translateX(0px); }
+  }
+  
+
+  .custom-modal .modal-content {
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Header Gradient Colors */
+  .bronze-gradient {
+    background: linear-gradient(135deg, #5a4f10, #6a6e11);
+  }
+  .silver-gradient {
+    background: linear-gradient(135deg, #c0c0c0, #e0e0e0);
+  }
+  .gold-gradient {
+    background: linear-gradient(135deg, #ffd700, #ffb700);
+  }
+  .platinum-gradient {
+    background: linear-gradient(135deg, #990F4B, #b81159);
+  }
+  
+  /* Plan Badge with Glowing Effect */
+/* Silver Badge with Sparkle Effect */
+.plan-badge {
+    font-size: 24px;
+    padding: 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #b4b4b4, #d1d1d1);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Sparkles */
+  .plan-badge::before,
+  .plan-badge::after {
+    content: "✦";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    opacity: 0;
+    animation: sparkle 2s infinite linear;
+  }
+  
+  .plan-badge::before {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0.5s;
+  }
+  
+  .plan-badge::after {
+    bottom: 10%;
+    right: 10%;
+    animation-delay: 1.2s;
+  }
+  
+  /* Sparkle Animation */
+  @keyframes sparkle {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+  }
+  
+  
+  /* Color Variations */
+  .bronze {
+    background: #726b36;
+    color: white;
+    box-shadow: 0 0 10px rgba(114, 127, 59, 0.8);
+  }
+
+  .silver {
+    background: #b4b4b4;
+    color: white;
+    box-shadow: 0 0 10px rgba(180, 180, 180, 0.8);
+  }
+  .gold {
+    background: #ffd700;
+    color: white;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  }
+  .platinum {
+    background: #990F4B;
+    color: white;
+    box-shadow: 0 0 10px #990F4B;
+  }
+  
+  /* Glowing Animation */
+  
+  /* Price Badge */
+  .price-text {
+    font-size: 18px;
+  }
+  .price-badge {
+    background: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+  
+  /* Buttons */
+  .btn-buy {
+    background: #007bff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+  .btn-buy:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+  }
+  
+  .btn-cancel {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+  .btn-cancel:hover {
+    background: #a71d2a;
+    transform: scale(1.05);
+    color: white;
+  }
+  
+  /* Plan Buttons */
+  .plan-button {
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+  .plan-button:hover {
+    transform: scale(1.05);
+  }
+  

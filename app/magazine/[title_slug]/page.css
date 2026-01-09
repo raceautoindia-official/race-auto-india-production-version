@@ -1,0 +1,29 @@
+/* * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.react-pdf__Page {
+  width: 360px;
+  height: auto;
+}
+
+.react-pdf__Page__canvas {
+  margin-top: 5px;
+  height: auto !important;
+  width: 360px !important;
+}
+
+.react-pdf__Document {
+  margin-top: 10px;
+  width: 100% !important;
+  display: flex;
+  justify-content: center;
+}
+ */
+
+ .magazine-page{
+  min-height: 100vh;
+  background-color: #383838;
+ }
+
