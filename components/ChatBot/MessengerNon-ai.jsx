@@ -2,16 +2,27 @@
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import ChatBot from "react-chatbotify";
 import emailjs from "@emailjs/browser";
 import { toast } from 'react-toastify';
 
-// Detect if the user is on desktop or mobile
-const isDesktop = !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+const ChatBot = dynamic(
+  () => import("react-chatbotify").then((m) => m.default),
+  { ssr: false }
+);
+
+const UA_REGEX =
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+
 
 const FloatingChatBot = () => {
   const router = useRouter();
   const [latestNews, setLatestNews] = useState([])
+
+  const isDesktop = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const ua = navigator?.userAgent ?? "";
+    return !UA_REGEX.test(ua);
+  }, []);
 
   const latestNewsApi = async () => {
     try {
