@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-export default function SquareAd({
+export default function SidebarAd({
   slot,
   className = "",
   minHeight = 250,
 }: {
-  slot: string;
+  slot: string;          // e.g. "5763596286"
   className?: string;
   minHeight?: number;
 }) {
@@ -20,17 +20,19 @@ export default function SquareAd({
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
   return (
     <div className={className} style={{ width: "100%", minHeight }}>
       <ins
         className="adsbygoogle"
-        style={{ display: "block", width: "100%", minHeight }}
+        style={{ display: "block" }}
         data-ad-client="ca-pub-5751151754746971"
         data-ad-slot={slot}
-        data-ad-format="rectangle"
+        data-ad-format="auto"
         data-full-width-responsive="true"
       />
     </div>

@@ -125,12 +125,7 @@ const Post = async ({
             />
           </a>
         </div> */}
-        <span
-                style={{ borderBottom: "1px solid black" }}
-                className="m-0 mb-2 p-0 text-center"
-              >
-                Advertisement
-              </span>
+       
         
 
         <div>
@@ -198,6 +193,12 @@ const Post = async ({
             />
           </Link>
         </div>
+         <span
+                style={{ borderBottom: "1px solid black" }}
+                className="m-0 mb-2 p-0 text-center"
+              >
+                Advertisement
+              </span>
 <LeaderboardAd slot="9918463715" className="my-3" />
         <PostContent
           content={post.content}

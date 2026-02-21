@@ -39,12 +39,18 @@ const Sidebar = async () => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/recommended-news`, {
       next: { revalidate: 60 },
     }),
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/adspace/sidebar_top`, {
-      next: { revalidate: 600 },
-    }),
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/adspace/sidebar_bottom`, {
-      next: { revalidate: 600 },
-    }),
+    fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/adspace/sidebar_top`,
+      {
+        next: { revalidate: 600 },
+      },
+    ),
+    fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/adspace/sidebar_bottom`,
+      {
+        next: { revalidate: 600 },
+      },
+    ),
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/event/settings`, {
       next: { revalidate: 3600 },
     }),
@@ -59,12 +65,12 @@ const Sidebar = async () => {
   return (
     <div className="col-lg-4 mb-4 mt-4">
       {/* ✅ Square Ad #1 (TOP) */}
-       <span
-                style={{ borderBottom: "1px solid black" }}
-                className="m-0 mb-2 p-0 text-center"
-              >
-                Advertisement
-              </span>
+      <span
+        style={{ borderBottom: "1px solid black" }}
+        className="m-0 mb-2 p-0 text-center"
+      >
+        Advertisement
+      </span>
       <SquareAd slot="5763596286" className="my-2" minHeight={250} />
 
       <div className="row mt-1">
@@ -82,12 +88,12 @@ const Sidebar = async () => {
           <DeskTopView />
         </div>
       </div>
- <span
-                style={{ borderBottom: "1px solid black" }}
-                className="m-0 mb-2 p-0 text-center"
-              >
-                Advertisement
-              </span>
+      <span
+        style={{ borderBottom: "1px solid black" }}
+        className="m-0 mb-2 p-0 text-center"
+      >
+        Advertisement
+      </span>
       {/* ✅ Square Ad #2 (BOTTOM) */}
       <SquareAd slot="7895522066" className="my-3" minHeight={250} />
 

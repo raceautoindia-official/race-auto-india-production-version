@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-export default function LeaderboardAd({
+export default function InArticleAd({
   slot,
   className = "",
+  style,
 }: {
-  slot: string;
+  slot: string;               // e.g. "9918463715"
   className?: string;
+  style?: React.CSSProperties; // optional extra styles
 }) {
   const pushedRef = useRef(false);
 
@@ -19,18 +21,24 @@ export default function LeaderboardAd({
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
   return (
-    <div className={className} style={{ width: "100%", minHeight: 90 }}>
+    <div className={className}>
       <ins
         className="adsbygoogle"
-        style={{ display: "block", width: "100%", minHeight: 90 }}
+        style={{
+          display: "block",
+          textAlign: "center",
+          ...(style || {}),
+        }}
+        data-ad-layout="in-article"
+        data-ad-format="fluid"
         data-ad-client="ca-pub-5751151754746971"
         data-ad-slot={slot}
-        data-ad-format="horizontal"
-        data-full-width-responsive="true"
       />
     </div>
   );
