@@ -5,6 +5,7 @@ const MyBarChart = dynamic(() => import("./BarChart"), { ssr: false });
 const PieChartAdmin = dynamic(() => import("./PieChart"), { ssr: false });
 const ExcelUpload = dynamic(() => import("./ExcelUpload"), { ssr: false });
 import { FaClipboardList, FaUser } from "react-icons/fa";
+import { RiUserSearchLine } from "react-icons/ri"; 
 import { IoIosMail } from "react-icons/io";
 import { MdEventAvailable } from "react-icons/md";
 import MostViewedPost from "./MostViewedPost";
@@ -49,6 +50,12 @@ const Dashboard = async () => {
         bgcolor="linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(244,241,31,1) 0%, rgba(237,238,190,1) 100%)"
         icon={<FaUser className="ms-2" size={40} />}
       />
+<DashboardCard
+  total={cardData.totalTrialLeads || 0}
+  title="Trial Leads"
+  bgcolor="linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(251,191,36,1) 0%, rgba(253,230,138,1) 100%)"
+  icon={<RiUserSearchLine className="ms-2" size={40} />}
+/>
       <DashboardCard
         total={cardData.totalMagazine}
         title="Magazine"
