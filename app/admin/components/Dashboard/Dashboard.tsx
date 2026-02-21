@@ -56,12 +56,12 @@ const Dashboard = async () => {
   bgcolor="linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(251,191,36,1) 0%, rgba(253,230,138,1) 100%)"
   icon={<RiUserSearchLine className="ms-2" size={40} />}
 />
-      <DashboardCard
+      {/* <DashboardCard
         total={cardData.totalMagazine}
         title="Magazine"
         bgcolor="linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(46,244,31,1) 0%, rgba(193,238,190,1) 100%)"
         icon={<IoIosMail className="ms-2" size={40} />}
-      />
+      /> */}
       <DashboardCard
         total={cardData.totalevents}
         title="Event"
