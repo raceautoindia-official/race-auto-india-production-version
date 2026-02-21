@@ -131,7 +131,7 @@ const Post = async ({
               >
                 Advertisement
               </span>
-        <LeaderboardAd slot="6930124449" className="my-3" />
+        
 
         <div>
           {(token || token !== undefined) && (
@@ -198,7 +198,7 @@ const Post = async ({
             />
           </Link>
         </div>
-
+<LeaderboardAd slot="9918463715" className="my-3" />
         <PostContent
           content={post.content}
           token={token?.value}

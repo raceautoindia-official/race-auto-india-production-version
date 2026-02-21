@@ -65,7 +65,7 @@ const Sidebar = async () => {
               >
                 Advertisement
               </span>
-      <SquareAd slot="5055587764" className="my-2" minHeight={250} />
+      <SquareAd slot="5763596286" className="my-2" minHeight={250} />
 
       <div className="row mt-1">
         <div className="col-12">
@@ -89,7 +89,7 @@ const Sidebar = async () => {
                 Advertisement
               </span>
       {/* ✅ Square Ad #2 (BOTTOM) */}
-      <SquareAd slot="5547144998" className="my-3" minHeight={250} />
+      <SquareAd slot="7895522066" className="my-3" minHeight={250} />
 
       <Link href="/subscription">
         <div
