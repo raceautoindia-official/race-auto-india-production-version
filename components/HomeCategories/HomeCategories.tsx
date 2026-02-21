@@ -23,7 +23,7 @@ type varient = {
 const HomeCategories = async ({ item }: catgeorypropType) => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}api/category/home-category?main=${item.name_slug}`,
-    { cache: "no-store" }
+    { next: { revalidate: 60 } }
   );
 
   const rawData = await res.json();

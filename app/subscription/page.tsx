@@ -22,6 +22,7 @@ const page = async () => {
       <Script
         type="text/javascript"
         src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
       />
       <PageViewTracker page="subscription" />
       <BreakingNews />

@@ -3,9 +3,9 @@ import mysql from "mysql2/promise";
 // Create the connection to database
 const db = mysql.createPool({
   host: "localhost",
-  user: "root",
+  user: "deploy",
   database: "race_news",
-  password: "Race@2023",
+  password: "e9b5vwCxt%9AWHEERJQZNfmTwQC%eXn2iq`EnDKj",
   waitForConnections: true,
   connectionLimit: 500,
   maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`

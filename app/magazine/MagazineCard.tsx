@@ -25,7 +25,6 @@ const MagazineCard = ({ item }: { item: magazineCardType }) => {
                   alt={item.title}
                   className={styles.magazinecard}
                   fill
-                  priority
                   src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${item.image_url}`}
                   sizes="(max-width: 480px) 100vw, (max-width: 768px) 75vw, (max-width: 1200px) 40vw, 25vw"
                 />

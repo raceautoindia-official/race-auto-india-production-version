@@ -17,9 +17,7 @@ type Feature = {
 const HomeBanner = async () => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}api/features`,
-    {
-      cache: "no-store",
-    }
+    { next: { revalidate: 60 } }
   );
   const data: Feature[] = await res.json();
   const orderedFeatures = data.sort(

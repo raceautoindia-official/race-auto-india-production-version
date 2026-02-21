@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic"
 import db from "@/lib/db";
 import { MetadataRoute } from "next";
+import { absUrl } from "@/lib/seo";
 
 
 export const revalidate = 3600;
@@ -52,58 +53,62 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   // Generate the URLs for different types of content
-  const sitemap: MetadataRoute.Sitemap = [
-    {
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}`,
-      changeFrequency: "daily",
-      priority: 1.0,
-    },
-    ...pages.map((page: any) => ({
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}page/${escapeXML(page.slug.toLowerCase())}`,
-      changeFrequency: "weekly",
-      priority: 0.6,
-    })),
-    ...market.map((page: any) => ({
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}market/${escapeXML(page.title_slug.toLowerCase())}`,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    })),
-    ...mainCategory.map((category: any) => ({
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}category/${escapeXML(category.name_slug.toLowerCase())}`,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    })),
-    ...articles.map((article: any) => ({
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}post/${escapeXML(
-        article.title_slug
-      )}`,
-      lastModified: getISOString(article.updated_at),
-      changeFrequency: "daily",
-      priority: 0.9,
-      images: article.image_mid
-        ? [
-            {
-              url: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${article.image_mid}`,
-              caption: article.title,
-              title: article.title,
-            },
-          ]
-        : [],
-      news: {
-        publication: {
-          name: "Race Auto India",
-          language: "en",
-        },
-        publication_date: getISOString(article.updated_at),
-        title: article.title,
+const sitemap: MetadataRoute.Sitemap = [
+  {
+    url: absUrl("/"),
+    changeFrequency: "daily",
+    priority: 1.0,
+  },
+
+  ...pages.map((page: any) => ({
+    url: absUrl(`/page/${escapeXML(page.slug.toLowerCase())}`),
+    changeFrequency: "weekly",
+    priority: 0.6,
+  })),
+
+  ...market.map((page: any) => ({
+    url: absUrl(`/market/${escapeXML(page.title_slug.toLowerCase())}`),
+    changeFrequency: "monthly",
+    priority: 0.5,
+  })),
+
+  ...mainCategory.map((category: any) => ({
+    url: absUrl(`/category/${escapeXML(category.name_slug.toLowerCase())}`),
+    changeFrequency: "monthly",
+    priority: 0.7,
+  })),
+
+  ...articles.map((article: any) => ({
+    url: absUrl(`/post/${escapeXML(article.title_slug)}`),
+    lastModified: getISOString(article.updated_at),
+    changeFrequency: "daily",
+    priority: 0.9,
+    images: article.image_mid
+      ? [
+          {
+            url: `${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${article.image_mid}`,
+            caption: article.title,
+            title: article.title,
+          },
+        ]
+      : [],
+    news: {
+      publication: {
+        name: "Race Auto India",
+        language: "en",
       },
-    })),
-    ...tags.map((tag: any) => ({
-      url: `${process.env.NEXT_PUBLIC_BACKEND_URL}tag/${escapeXML(tag.tag_slug)}`,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    })),
-  ];
+      publication_date: getISOString(article.updated_at),
+      title: article.title,
+    },
+  })),
+
+  ...tags.map((tag: any) => ({
+    url: absUrl(`/tag/${escapeXML(tag.tag_slug)}`),
+    changeFrequency: "monthly",
+    priority: 0.5,
+  })),
+];
+
 
   return sitemap;
 }

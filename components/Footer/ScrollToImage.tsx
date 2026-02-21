@@ -20,7 +20,6 @@ const ScrollToTopLogo = ({ logoData }: { logoData: any }) => {
         src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${logoData}`}
         width={130}
         height={152}
-        priority
         alt="logo_footer"
       />
     </button>

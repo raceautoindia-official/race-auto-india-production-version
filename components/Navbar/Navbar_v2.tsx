@@ -24,17 +24,23 @@ export type mainMenu = {
 const Navbar_V2 = async () => {
   const resposne = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}api/category/main-category`,
-    { cache: "no-store" }
+   {
+    next: { revalidate: 600 },
+  }
   );
   const data = await resposne.json();
 
   const logoResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/general-settings/logo`
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/general-settings/logo`,{
+    next: { revalidate: 3600 },
+  }
   );
   const logoData = await logoResponse.json();
 
   const marketResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/market`
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/market`,{
+    next: { revalidate: 600 },
+  }
   );
   const marketData = await marketResponse.json();
 
@@ -43,7 +49,8 @@ const Navbar_V2 = async () => {
   );
 
   const morepageResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/pages/main-menu`
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/pages/main-menu`,{
+    next: { revalidate: 600 },}
   );
   const morePage = await morepageResponse.json();
 

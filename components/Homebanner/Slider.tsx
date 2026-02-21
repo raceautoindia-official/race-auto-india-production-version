@@ -13,9 +13,7 @@ type SliderType = {
 const Slider = async () => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}api/slider`,
-    {
-      cache: "no-store",
-    }
+    { next: { revalidate: 60 } }
   );
   const slides: SliderType[] = await response.json();
 

@@ -6,7 +6,6 @@ import {
   FaAd,
   FaAdversal,
   FaAngleDown,
-  
   FaHome,
   FaImage,
   FaMicrochip,
@@ -48,7 +47,7 @@ import { CiBank, CiText } from "react-icons/ci";
 
 const AdminSidebar = async () => {
   const logoRes = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/general-settings/logo`
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/general-settings/logo`,
   );
 
   const logoData = await logoRes.json();
@@ -122,6 +121,58 @@ const AdminSidebar = async () => {
                   <FaAdversal className="text-primary" />{" "}
                   <span className="d-none d-sm-inline text-primary">
                     Magazine Ad
+                  </span>
+                </Link>
+              </li>
+            </ul>
+          </li>
+          <li style={{ width: "100%" }}>
+            <Link
+              href="#analyticsmenu"
+              data-bs-toggle="collapse"
+              className="nav-link px-0 align-middle d-flex align-items-center"
+            >
+              <TbReportAnalytics />{" "}
+              <span className="ms-1 d-none d-sm-inline">Analytics</span>
+              <span className="d-none d-sm-inline ms-auto">
+                <FaAngleDown />
+              </span>
+            </Link>
+
+            <ul
+              className="collapse nav flex-column ms-1"
+              id="analyticsmenu"
+              data-bs-parent="#menu"
+            >
+              <li className="w-100">
+                <Link href="/admin/post-interactions" className="nav-link px-0">
+                  <TbReportAnalytics className="text-primary" />{" "}
+                  <span className="d-none d-sm-inline text-primary">
+                    Flash CTA Summary
+                  </span>
+                </Link>
+              </li>
+
+              <li className="w-100">
+                <Link
+                  href="/admin/post-interactions/logs"
+                  className="nav-link px-0"
+                >
+                  <TbReportAnalytics className="text-primary" />{" "}
+                  <span className="d-none d-sm-inline text-primary">
+                    Flash CTA Logs
+                  </span>
+                </Link>
+              </li>
+
+              <li className="w-100">
+                <Link
+                  href="/admin/post-interactions/user"
+                  className="nav-link px-0"
+                >
+                  <TbReportAnalytics className="text-primary" />{" "}
+                  <span className="d-none d-sm-inline text-primary">
+                    User / Visitor Drilldown
                   </span>
                 </Link>
               </li>

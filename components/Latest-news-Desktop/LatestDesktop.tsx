@@ -1,61 +1,43 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import db from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
 import "./latestNews.css";
 
-export default function LatestNewsDesktop() {
-  const [newsItems, setNewsItems] = useState([]);
-  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+export const revalidate = 60;
 
-  // Helper to truncate text
-  const truncate = (text: string, maxLength: number) =>
-    text && text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+type NewsItem = {
+  id: number;
+  title: string;
+  title_slug: string;
+  summary: string;
+  image_mid: string;
+};
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch("/api/latest-news");
-        const data = await res.json();
-        setNewsItems(data);
-      } catch (err) {
-        console.error("Error fetching news:", err);
-      }
-    };
+export default async function LatestNewsDesktop() {
+  let newsItems: NewsItem[] = [];
 
-    fetchNews();
+  try {
+    const [results] = await db.execute(
+      "SELECT id, title, title_slug, summary, image_mid FROM posts ORDER BY id DESC LIMIT 4"
+    );
 
-    // Set initial device type
-    const checkDevice = () => {
-      setIsMobileOrTablet(window.innerWidth < 992);
-    };
-
-    checkDevice();
-    window.addEventListener("resize", checkDevice); // Optional: listen for resize
-    return () => window.removeEventListener("resize", checkDevice); // Cleanup
-  }, []);
+    newsItems = Array.isArray(results) ? (results as NewsItem[]) : [];
+  } catch (e) {
+    console.error("LatestNewsDesktop DB error:", e);
+  }
 
   return (
     <div className="container-fluid py-4 m-2">
       <div className="row">
-        {newsItems.slice(0, 4).map((item: any, idx: number) => (
-          <div className="col-md-6 mb-4" key={idx}>
+        {newsItems.map((item) => (
+          <div className="col-md-6 mb-4" key={item.id}>
             <div className="border-bottom pb-2">
               <div className="row g-2 align-items-center">
-                {/* Text Content: 7 Columns */}
                 <div className="col-lg-7">
-                  <h6 className="fw-semibold mb-1">
-                    {isMobileOrTablet ? truncate(item.title, 40) : item.title}
-                  </h6>
-                  <p className="mb-0 small">
-                    {isMobileOrTablet
-                      ? truncate(item.summary, 60)
-                      : item.summary}
-                  </p>
+                  <h6 className="fw-semibold mb-1 latest-title">{item.title}</h6>
+                  <p className="mb-0 small latest-summary">{item.summary}</p>
                 </div>
 
-                {/* Image: 5 Columns */}
                 <div className="col-lg-5">
                   <Link href={`/post/${item.title_slug}`}>
                     <div
@@ -72,6 +54,8 @@ export default function LatestNewsDesktop() {
                         fill
                         className="rounded"
                         style={{ objectFit: "cover" }}
+                        quality={60}
+                        sizes="(max-width: 992px) 50vw, 260px"
                       />
                     </div>
                   </Link>

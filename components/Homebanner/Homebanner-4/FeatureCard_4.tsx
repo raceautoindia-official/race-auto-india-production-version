@@ -2,7 +2,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import styles from "../HomeBanner.module.css";
-import getBaseUrl from "@/lib/getbaseurl";
 import { formatDate } from "@/components/Time";
 
 type Feature = {
@@ -20,9 +19,7 @@ type Props = {
 };
 
 const FeatureCard_4 = async ({ item }: Props) => {
-  const blurdata = await getBaseUrl(
-    process.env.NEXT_PUBLIC_S3_BUCKET_URL + item.image_big
-  );
+
 
   // Format date
 
@@ -39,9 +36,9 @@ const FeatureCard_4 = async ({ item }: Props) => {
                 fill
                 className={styles.featured__image}
                 placeholder="blur"
-                blurDataURL={blurdata}
+blurDataURL="/images/dummy_600x400_ffffff_cccccc (1).png"
                 sizes="(max-width: 768px) 100vw, (min-width: 769px) 50vw"
-                priority
+
               />
             </div>
           </Link>

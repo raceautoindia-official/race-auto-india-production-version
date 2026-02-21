@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import styles from "../HomeBanner.module.css";
-import getBaseUrl from "@/lib/getbaseurl";
 type Feature = {
   id: number;
   title: string;
@@ -20,9 +19,6 @@ type proptype = {
 const FeatureCard_3 = async (props: proptype) => {
   const { item } = props;
 
-  const blurdata = await getBaseUrl(
-    process.env.NEXT_PUBLIC_S3_BUCKET_URL + item.image_big
-  );
   return (
     <div className="col-12 mb-3">
       <Link className="link-style" href={`/post/${item.title_slug}`}>
@@ -35,9 +31,8 @@ const FeatureCard_3 = async (props: proptype) => {
             alt={item.title}
             className={styles.featured__image}
             fill
-            priority
             placeholder="blur"
-            blurDataURL={blurdata}
+            blurDataURL="/images/dummy_600x400_ffffff_cccccc (1).png"
             sizes="(max-width: 480px) 100vw, (max-width: 768px) 75vw, (max-width: 1200px) 40vw, 25vw"
           />
           <div

@@ -199,7 +199,6 @@ const Magazine_v2 = () => {
                             className={styles.magazinecard}
                             alt={item.title}
                             fill
-                            priority
                             src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${item.image_url}`}
                             sizes="(max-width: 480px) 100vw, (max-width: 768px) 75vw, (max-width: 1200px) 40vw, 25vw"
                           />
@@ -212,19 +211,7 @@ const Magazine_v2 = () => {
                         >
                           {item.title}
                         </h6>
-                        <div
-                          className="text-muted"
-                          style={{
-                            fontSize: "0.85rem",
-                            color: "#555",
-                          }}
-                        >
-                          👁️{" "}
-                          {
-                           1863 + item.magazine_views
-                          }{" "}
-                          views
-                        </div>
+                       
                       </Card.Body>
                     </Card>
                   </div>

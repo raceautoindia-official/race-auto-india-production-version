@@ -48,7 +48,6 @@ const MagazineCard_v2 = ({ item }: { item: magazineCardType }) => {
               className={styles.magazinecard}
               alt={item.title}
               fill
-              priority
               src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${item.image_url}`}
               sizes="(max-width: 480px) 100vw, (max-width: 768px) 75vw, (max-width: 1200px) 40vw, 25vw"
               style={{ objectFit: "cover" }}
@@ -59,7 +58,7 @@ const MagazineCard_v2 = ({ item }: { item: magazineCardType }) => {
           <h6 className="fw-bold mb-2" style={{ fontSize: "0.95rem" }}>
             {item.title}
           </h6>
-          <div
+          {/* <div
             className="text-muted"
             style={{
               fontSize: "0.85rem",
@@ -67,7 +66,7 @@ const MagazineCard_v2 = ({ item }: { item: magazineCardType }) => {
             }}
           >
             👁️ {simulatedViews.toLocaleString()} views
-          </div>
+          </div> */}
         </Card.Body>
       </Card>
     </div>

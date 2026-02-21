@@ -1,15 +1,11 @@
 import MainComponent from "@/components/HomeCategories/MainComponent";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import BreakingNews from "@/components/BreakingNews/BreakingNews";
-import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
-import HeaderAd from "@/components/HeaderAd/HeaderAd";
-import GreenBar from "@/components/GreenBar/MagazineBar";
 import HomeBanner_3 from "@/components/Homebanner/Homebanner-3/HomeBanner-3";
 import HomeBanner_4 from "@/components/Homebanner/Homebanner-4/HomeBanner-4";
 import MagazineAd_2 from "@/components/MagazineHomePage/MagazineAd-2";
 import HomeMarket from "@/components/Home-Market/HomeMarket";
-import HomeReports from "@/components/homeReports/homeReports";
 import HomeBanner from "@/components/Homebanner/HomeBanner";
 import HomeBanner_2 from "@/components/Homebanner/Homebanner-2/HomeBanner-2";
 import LinkedinPage from "@/components/LinkedinForm/LinkedinPage";
@@ -19,17 +15,16 @@ import AdHeader from "@/components/GoogleAds/AdHeader";
 import styles from "./page.module.css";
 import MobileNavNew from "@/components/MobileNavbarNew/MobileNavNew";
 import PageViewTracker from "./pageTracker";
-import Script from "next/script";
-import ContactModal from "@/components/SubscribeModal";
+
 import LatestNewsDesktop from "@/components/Latest-news-Desktop/LatestDesktop";
-import HomeVideo from '@/components/Home-video/homeVideo'
+
 import Navbar_V2 from "@/components/Navbar/Navbar_v2";
-import HeaderAdSwiper from "@/components/HeaderAd/HeaderAdsv-2";
+import HeaderAdSwiper from "@/components/HeaderAd/HeaderAdsv-2-idle";
 
 const Home = async () => {
   const sliderRes = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/post/slider`,
-    { cache: "no-store" }
+    { next: { revalidate: 600 } }
   );
   const slide = await sliderRes.json();
 

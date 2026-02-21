@@ -1,6 +1,7 @@
 /* styles.css or AdHeader.module.css */
 .ad_header {
     display: block;
+    min-height: 50px; /* reserve space to avoid CLS */
   }
   
   @media (max-width: 767px) {

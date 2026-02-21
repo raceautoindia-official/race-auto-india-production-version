@@ -44,13 +44,14 @@ const HeaderAdSwiper = () => {
     }
   }, [isVisible]);
 
-  if (isLoading) {
-    return (
-      <div className="my-4">
-        <Skeleton height={50} baseColor="#e0e7ff" highlightColor="#c7d2fe" />
-      </div>
-    );
-  }
+if (isLoading) {
+  return (
+    <div className="my-4" style={{ minHeight: 90 }}>
+      <Skeleton height={90} baseColor="#e0e7ff" highlightColor="#c7d2fe" />
+    </div>
+  );
+}
+
 
   if (!isVisible || ads.length === 0) return null;
 
@@ -93,7 +94,6 @@ const HeaderAdSwiper = () => {
                     src={imageUrl}
                     alt="Header Ad"
                     fill
-                    priority
                     style={{ objectFit: "contain" }}
                   />
                 </div>

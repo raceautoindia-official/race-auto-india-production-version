@@ -32,10 +32,15 @@ const MainComponent = async () => {
       >
         <Link href={adTopData[0].link || 'https://raceautoindia.com/'} target="_blank">
           <Image
-            src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${adTopData[0].ad_code_728}`}
-            alt="index top"
-            fill
-          />
+  src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${adTopData[0].ad_code_728}`}
+  alt="index top"
+  fill
+  sizes="(max-width: 768px) 100vw, 728px"
+  style={{ objectFit: "contain" }}
+  quality={60}
+  unoptimized={String(adTopData?.[0]?.ad_code_728 || "").toLowerCase().endsWith(".gif")}
+/>
+
         </Link>
       </div>
       {showOnHome.map((item) => (
@@ -50,10 +55,15 @@ const MainComponent = async () => {
       >
         <Link href={adBottomData[0].link || 'https://raceautoindia.com/'} target="_blank">
           <Image
-            src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${adBottomData[0].ad_code_728}`}
-            alt="index Bottom"
-            fill
-          />
+  src={`${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${adBottomData[0].ad_code_728}`}
+  alt="index Bottom"
+  fill
+  sizes="(max-width: 768px) 100vw, 728px"
+  style={{ objectFit: "contain" }}
+  quality={60}
+  unoptimized={String(adBottomData?.[0]?.ad_code_728 || "").toLowerCase().endsWith(".gif")}
+/>
+
         </Link>
       </div>
     </>

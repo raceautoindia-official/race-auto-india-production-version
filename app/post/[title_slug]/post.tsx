@@ -11,6 +11,7 @@ import Image from "next/image";
 import AdArticleMiddle from "@/components/GoogleAds/AdArticleMiddle";
 import { FaEye } from "react-icons/fa";
 import { Button } from "react-bootstrap";
+import LeaderboardAd from "@/components/GoogleAds/LeaderboardAd";
 
 export type postsliderType = {
   image_default: string;
@@ -124,6 +125,14 @@ const Post = async ({
             />
           </a>
         </div> */}
+        <span
+                style={{ borderBottom: "1px solid black" }}
+                className="m-0 mb-2 p-0 text-center"
+              >
+                Advertisement
+              </span>
+        <LeaderboardAd slot="YOUR_LEADERBOARD_TOP_SLOT" className="my-3" />
+
         <div>
           {(token || token !== undefined) && (
             <EditButton token={token.value} id={post.id} />
@@ -215,7 +224,17 @@ const Post = async ({
             />
           </a>
         </div> */}
+        <br/>
+        <span
+                style={{ borderBottom: "1px solid black" }}
+                className="m-0 mb-2 p-0 text-center"
+              >
+                Advertisement
+              </span>
+        <LeaderboardAd slot="YOUR_LEADERBOARD_BOTTOM_SLOT" className="my-4" />
       </div>
+      
+
     </>
   );
 };

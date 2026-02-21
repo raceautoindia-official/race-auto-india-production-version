@@ -42,12 +42,14 @@ export default function MySwiperComponent({
       style={{ marginTop: 3 }}
       pagination={pagination}
     >
-      {slides.map((item) => (
+      {slides.map((item, idx) => (
+
         <SwiperSlide key={item.id}>
           <Link href={`/post/${item.title_slug}`}>
             <ImageWithPlaceholder
               src={process.env.NEXT_PUBLIC_S3_BUCKET_URL + item.image_big}
               alt={item.title}
+               priority={idx === 0}
             />
             <div className="swiper-title-container">
               <h6 className="swiper-title">{item.title}</h6>
@@ -59,7 +61,7 @@ export default function MySwiperComponent({
   );
 }
 
-function ImageWithPlaceholder({ src, alt }: { src: string; alt: string }) {
+function ImageWithPlaceholder({ src, alt,  priority }: { src: string; alt: string; priority: boolean; }) {
   const [loading, setLoading] = useState(true);
 
   return (
@@ -69,7 +71,7 @@ function ImageWithPlaceholder({ src, alt }: { src: string; alt: string }) {
         alt={alt}
         fill
         style={{ objectFit: "cover" }}
-        priority
+        priority={priority}
         quality={60}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 40vw"
         placeholder="blur"

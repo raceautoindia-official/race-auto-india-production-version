@@ -4,7 +4,8 @@ import "./Breakingnews.css";
 
 const BreakingNews = async () => {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/breaking-news`
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}api/breaking-news`,
+    { next: { revalidate: 60 } }
   );
 
   const breakingNewsData = await res.json();
