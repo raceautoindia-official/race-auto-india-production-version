@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from "react";
 import "./subscriptioncards.css";
 import "./subscriptioncard.css";
@@ -9,10 +9,6 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { Tooltip } from "react-tooltip";
-import {
-  getActivePlanName,
-  getPlanAction,
-} from "@/lib/subscriptionPlan";
 
 export default function PricingCard({
   title,
@@ -25,6 +21,8 @@ export default function PricingCard({
   isPopular,
   currency,
   isYear,
+  isCategoryDisabled = false,
+  categoryView = "individual",
 }) {
   const [email, setEmail] = useState("");
   const [subcriptionData, setSubcriptionData] = useState([]);
@@ -56,10 +54,42 @@ export default function PricingCard({
   }, [email]);
 
   const planKey = title.toLowerCase();
-  const currentPlan = getActivePlanName(subcriptionData);
-  const planAction = getPlanAction(currentPlan, planKey);
 
-  const shouldShowYourPlanBadge = planAction === "current";
+  const planRank = {
+    bronze: 1,
+    silver: 2,
+    gold: 3,
+    platinum: 4,
+  };
+
+  const planMeta = {
+    bronze: {
+      segmentLabel: "Individual Plan",
+      userCount: null,
+      segmentBg: "rgba(169, 113, 66, 0.12)",
+      segmentText: "#8a5a2b",
+    },
+    silver: {
+      segmentLabel: "Individual Plan",
+      userCount: null,
+      segmentBg: "rgba(124, 124, 124, 0.12)",
+      segmentText: "#666666",
+    },
+    gold: {
+      segmentLabel: "Business Plan",
+      userCount: "5 Users",
+      segmentBg: "rgba(218, 165, 32, 0.14)",
+      segmentText: "#a97700",
+    },
+    platinum: {
+      segmentLabel: "Enterprise Plan",
+      userCount: "15 Users",
+      segmentBg: "rgba(44, 62, 80, 0.12)",
+      segmentText: "#2c3e50",
+    },
+  };
+
+  const currentMeta = planMeta[planKey] || planMeta.bronze;
 
   const fakePrice =
     typeof price === "number" && typeof multipliedPrice === "number"
@@ -72,6 +102,21 @@ export default function PricingCard({
     fakePrice > price
       ? Math.round(((fakePrice - price) / fakePrice) * 100)
       : null;
+
+  const userPlan =
+    subcriptionData.length > 0 ? subcriptionData[0]?.plan_name : null;
+
+  const isUserSubscribed =
+    subcriptionData.length !== 0 &&
+    subcriptionData[0]?.end_date &&
+    new Date(subcriptionData[0].end_date) > new Date();
+
+  const currentPlanRank = isUserSubscribed ? planRank[userPlan] || 0 : 0;
+  const viewedPlanRank = planRank[planKey] || 0;
+
+  const isThisUserPlan = isUserSubscribed && userPlan === planKey;
+  const isLowerThanCurrent = isUserSubscribed && currentPlanRank > viewedPlanRank;
+  const shouldShowYourPlanBadge = isThisUserPlan;
 
   const hasTopBadge =
     (discountPercent && discountPercent > 0) || isPopular || shouldShowYourPlanBadge;
@@ -89,7 +134,6 @@ export default function PricingCard({
 
   const normalizeFeatureLabel = (label) => {
     if (!label) return "";
-
     let text = label;
 
     if (planKey === "silver") {
@@ -99,8 +143,34 @@ export default function PricingCard({
     return text;
   };
 
+  const getDisabledText = () => {
+    if (categoryView === "individual") {
+      return "Available in Business View";
+    }
+    return "Available in Individual View";
+  };
+
   const renderActionButton = () => {
-    if (planAction === "current") {
+    if (isCategoryDisabled) {
+      return (
+        <button
+          type="button"
+          className="btn btn-outline-secondary w-100"
+          disabled
+          style={{
+            borderRadius: "10px",
+            fontWeight: 700,
+            padding: "9px 14px",
+            fontSize: "0.92rem",
+            opacity: 0.9,
+          }}
+        >
+          {getDisabledText()}
+        </button>
+      );
+    }
+
+    if (isThisUserPlan) {
       return (
         <button
           type="button"
@@ -118,7 +188,7 @@ export default function PricingCard({
       );
     }
 
-    if (planAction === "included") {
+    if (isLowerThanCurrent) {
       return (
         <button
           type="button"
@@ -173,12 +243,27 @@ export default function PricingCard({
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        opacity: isCategoryDisabled ? 0.52 : 1,
+        filter: isCategoryDisabled ? "grayscale(18%)" : "none",
+        transition: "all 0.25s ease",
       }}
     >
+      {isCategoryDisabled && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(255,255,255,0.18)",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        />
+      )}
+
       {discountPercent && discountPercent > 0 && (
         <span
           className="badge bg-danger position-absolute top-0 start-0 m-2"
-          style={{ fontSize: "0.74rem", padding: "6px 8px" }}
+          style={{ fontSize: "0.74rem", padding: "6px 8px", zIndex: 3 }}
         >
           {discountPercent}% OFF
         </span>
@@ -197,7 +282,7 @@ export default function PricingCard({
             borderRadius: "999px",
             fontSize: "0.72rem",
             fontWeight: 700,
-            zIndex: 2,
+            zIndex: 3,
           }}
         >
           Popular
@@ -217,14 +302,15 @@ export default function PricingCard({
             borderRadius: "999px",
             fontSize: "0.72rem",
             fontWeight: 700,
-            zIndex: 3,
+            zIndex: 4,
           }}
         >
           Your Plan
         </div>
       )}
 
-      <div style={{ paddingTop: hasTopBadge ? "16px" : "0" }}>
+
+      <div style={{ paddingTop: hasTopBadge ? "16px" : "0", position: "relative", zIndex: 2 }}>
         <div
           style={{
             display: "flex",
@@ -243,31 +329,57 @@ export default function PricingCard({
                 fontSize: "1.08rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.35px",
-                marginBottom: "5px",
+                marginBottom: "6px",
                 lineHeight: 1.05,
               }}
             >
               {title}
             </h3>
 
-            {planKey === "bronze" && (
-              <div
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginBottom: "6px",
+              }}
+            >
+              <span
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "5px",
                   padding: "3px 9px",
                   borderRadius: "999px",
-                  background: "rgba(169, 113, 66, 0.12)",
-                  color: "#8a5a2b",
+                  background: currentMeta.segmentBg,
+                  color: currentMeta.segmentText,
                   fontSize: "0.62rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
                 }}
               >
-                Bronze Starter
-              </div>
-            )}
+                {currentMeta.segmentLabel}
+              </span>
+
+              {currentMeta.userCount && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "3px 9px",
+                    borderRadius: "999px",
+                    background: "rgba(15, 23, 42, 0.08)",
+                    color: "#334155",
+                    fontSize: "0.62rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentMeta.userCount}
+                </span>
+              )}
+            </div>
           </div>
 
           <div style={{ flexShrink: 0 }}>
@@ -321,7 +433,7 @@ export default function PricingCard({
 
       <div
         className="price-section"
-        style={{ textAlign: "center", marginBottom: "10px" }}
+        style={{ textAlign: "center", marginBottom: "10px", position: "relative", zIndex: 2 }}
       >
         {fakePrice && fakePrice > price && (
           <div
@@ -398,6 +510,8 @@ export default function PricingCard({
           overflowY: "auto",
           paddingRight: "4px",
           scrollbarWidth: "thin",
+          position: "relative",
+          zIndex: 2,
         }}
       >
         {features
@@ -521,7 +635,9 @@ export default function PricingCard({
           })}
       </ul>
 
-      <div style={{ marginTop: "10px", flexShrink: 0 }}>{renderActionButton()}</div>
+      <div style={{ marginTop: "10px", flexShrink: 0, position: "relative", zIndex: 2 }}>
+        {renderActionButton()}
+      </div>
     </div>
   );
 }

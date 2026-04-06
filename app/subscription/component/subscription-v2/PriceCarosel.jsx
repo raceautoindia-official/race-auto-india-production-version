@@ -10,6 +10,7 @@ export default function PricingCarousel() {
   const [planData, setPlanData] = useState([]);
   const [currency, setCurrency] = useState("INR");
   const [isYear, setIsYear] = useState(false);
+  const [categoryView, setCategoryView] = useState("individual");
 
   useEffect(() => {
     axios
@@ -34,7 +35,12 @@ export default function PricingCarousel() {
         ? Math.round((basePrice / usdValue) * 100) / 100
         : basePrice;
 
+    const isBusinessCategory = tier === "gold" || tier === "platinum";
+    const isCategoryDisabled =
+      categoryView === "individual" ? isBusinessCategory : !isBusinessCategory;
+
     return {
+      key: tier,
       title: tier.charAt(0).toUpperCase() + tier.slice(1),
       subtitle:
         tier === "bronze"
@@ -51,6 +57,8 @@ export default function PricingCarousel() {
         available: f[tier],
         description: f.description || "",
       })),
+      isCategoryDisabled,
+      categoryView,
     };
   };
 
@@ -86,6 +94,16 @@ export default function PricingCarousel() {
     },
   ];
 
+  const categoryTitle =
+    categoryView === "individual"
+      ? "Individual Category"
+      : "Business / Enterprise Category";
+
+  const categoryDescription =
+    categoryView === "individual"
+      ? "Bronze and Silver plans are active. Gold and Platinum stay visible in disabled view."
+      : "Gold and Platinum plans are active. Bronze and Silver stay visible in disabled view.";
+
   return (
     <div style={{ padding: "0 16px 32px" }}>
       <div
@@ -114,7 +132,7 @@ export default function PricingCarousel() {
             </button>
           </div>
 
-          <div className="btn-group rounded-pill shadow-sm">
+          <div className="btn-group rounded-pill shadow-sm me-2">
             <button
               type="button"
               style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
@@ -132,8 +150,34 @@ export default function PricingCarousel() {
               Yearly
             </button>
           </div>
+
+          <div className="btn-group rounded-pill shadow-sm">
+            <button
+              type="button"
+              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
+              className={`btn ${categoryView === "individual" ? "btn-dark active" : "btn-light"}`}
+              onClick={() => setCategoryView("individual")}
+            >
+              Individuals
+            </button>
+            <button
+              type="button"
+              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
+              className={`btn ${categoryView === "business" ? "btn-dark active" : "btn-light"}`}
+              onClick={() => setCategoryView("business")}
+            >
+              Business
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* <div style={{ textAlign: "center", marginTop: "20px", marginBottom: "10px" }}>
+        <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>{categoryTitle}</h6>
+        <p style={{ color: "#6b7280", fontSize: "0.92rem", marginBottom: 0 }}>
+          {categoryDescription}
+        </p>
+      </div> */}
 
       <div
         style={{
@@ -146,7 +190,7 @@ export default function PricingCarousel() {
         }}
       >
         {plans.map((p, i) => (
-          <div key={i} style={{ minWidth: 0 }}>
+          <div key={p.key || i} style={{ minWidth: 0 }}>
             <PricingCard {...p} />
           </div>
         ))}
