@@ -1,54 +1,9 @@
-// import crypto from "crypto";
-// import { NextRequest, NextResponse } from "next/server";
-
-// export async function POST(req: NextRequest) {
-//   try {
-//     const {
-//       razorpay_subscription_id,
-//       razorpay_payment_id,
-//       razorpay_signature,
-//     } = await req.json();
-
-//     if (!razorpay_payment_id || !razorpay_subscription_id || !razorpay_signature) {
-//       return NextResponse.json(
-//         { success: false, message: "Missing required fields" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const secret:any = process.env.NEXT_PUBLIC_RAZORPAY_KEY_SECRET;
-
-//     // Correct Signature Order: payment_id + "|" + subscription_id
-//     const generated_signature = crypto
-//       .createHmac("sha256", secret)
-//       .update(`${razorpay_payment_id}|${razorpay_subscription_id}`) // ✅ Correct order
-//       .digest("hex");
-
-//     if (generated_signature === razorpay_signature) {
-//       return NextResponse.json({
-//         success: true,
-//         message: "Subscription Payment Verified",
-//       });
-//     } else {
-//       return NextResponse.json(
-//         { success: false, message: "Invalid Subscription Signature" },
-//         { status: 400 }
-//       );
-//     }
-//   } catch (err) {
-//     console.error("Verification Error:", err);
-//     return NextResponse.json(
-//       { success: false, message: "Internal Server Error" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 import db from "@/lib/db";
 import crypto from "crypto";
 import schedule from "node-schedule";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
+import { getPlanCodeFromName } from "@/lib/subscriptionPlan";
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, {
@@ -122,6 +77,8 @@ export async function POST(req: NextRequest) {
       Date.now() + durationDays * 24 * 60 * 60 * 1000
     );
 
+    const subscription = getPlanCodeFromName(plan);
+
     if (existingSubscription.length > 0) {
       await db.execute(
         `UPDATE subscriptions
@@ -130,9 +87,6 @@ export async function POST(req: NextRequest) {
          WHERE user_id = ?`,
         [razorpay_payment_id, plan, durationDays, user_id]
       );
-
-      const subscription =
-        plan === "silver" ? 1 : plan === "gold" ? 2 : plan === "platinum" ? 3 : 0;
 
       await db.execute(`UPDATE users SET subscription = ? WHERE id = ?`, [
         subscription,
@@ -154,9 +108,6 @@ export async function POST(req: NextRequest) {
          VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), 'Active')`,
         [user_id, razorpay_payment_id, plan, durationDays]
       );
-
-      const subscription =
-        plan === "silver" ? 1 : plan === "gold" ? 2 : plan === "platinum" ? 3 : 0;
 
       await db.execute(`UPDATE users SET subscription = ? WHERE id = ?`, [
         subscription,

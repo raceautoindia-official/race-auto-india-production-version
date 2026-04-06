@@ -1,13 +1,13 @@
 import db from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import schedule from "node-schedule";
+import { getPlanCodeFromName } from "@/lib/subscriptionPlan";
 
 export async function GET(req: NextRequest) {
   try {
     const { pathname } = new URL(req.url);
     const id = pathname.split("/").pop();
 
-    // Check if the user already has an active subscription
     const [existingSubscription]: any = await db.execute(
       "SELECT * FROM subscriptions WHERE user_id = ?",
       [id]
@@ -31,24 +31,20 @@ export async function POST(req: NextRequest) {
 
     const { plan, duration, isExisting } = await req.json();
 
-    // Check if the user already has an active subscription
     const [existingSubscription]: any = await db.execute(
       "SELECT id FROM subscriptions WHERE user_id = ?",
       [id]
     );
 
     const durationDays = duration === "annual" ? 365 : 30;
-    const expireTime = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+    const expireTime = new Date(
+      Date.now() + durationDays * 24 * 60 * 60 * 1000
+    );
 
-    // const durationDays = 0; // override to 0 for DB, so end_date = NOW() + INTERVAL 0 DAY
-    // const expireTime = new Date(Date.now() + 1 * 60 * 1000); // 1 minute in milliseconds
-
-    const subscription =
-      plan == "silver" ? 1 : plan == "gold" ? 2 : plan == "platinum" ? 3 : 0;
+    const subscription = getPlanCodeFromName(plan);
 
     if (existingSubscription.length > 0) {
       if (!isExisting) {
-        // Update only plan_name and status without modifying start_date and end_date
         await db.execute(
           `UPDATE subscriptions 
            SET plan_name = ?, status = 'Active' 
@@ -56,7 +52,6 @@ export async function POST(req: NextRequest) {
           [plan, id]
         );
       } else {
-        // Update existing subscription with new start and end date
         await db.execute(
           `UPDATE subscriptions 
            SET plan_name = ?, 
@@ -67,7 +62,6 @@ export async function POST(req: NextRequest) {
           [plan, durationDays, id]
         );
 
-        // Schedule expiry update
         schedule.scheduleJob(expireTime, async function () {
           await db.execute(
             `UPDATE subscriptions SET status = 'expired' WHERE id = ?`,
@@ -76,11 +70,9 @@ export async function POST(req: NextRequest) {
           await db.execute(`UPDATE users SET subscription = 0 WHERE id = ?`, [
             id,
           ]);
-          console.log(`scheduled`);
         });
       }
     } else {
-      // Insert new subscription
       const [results]: any = await db.execute(
         `INSERT INTO subscriptions (user_id, plan_name, start_date, end_date, status)
          VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), 'Active')`,
@@ -89,7 +81,6 @@ export async function POST(req: NextRequest) {
 
       const subId = results.insertId;
 
-      // Schedule expiry update
       schedule.scheduleJob(expireTime, async function () {
         await db.execute(
           `UPDATE subscriptions SET status = 'expired' WHERE id = ?`,
@@ -98,11 +89,9 @@ export async function POST(req: NextRequest) {
         await db.execute(`UPDATE users SET subscription = 0 WHERE id = ?`, [
           id,
         ]);
-        console.log(`scheduled`);
       });
     }
 
-    // Update user subscription value
     await db.execute(`UPDATE users SET subscription = ? WHERE id = ?`, [
       subscription,
       id,

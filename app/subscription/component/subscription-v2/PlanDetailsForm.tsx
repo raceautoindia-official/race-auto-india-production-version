@@ -42,7 +42,6 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch token and decode email
   useEffect(() => {
     const t = Cookies.get("authToken");
     if (t) {
@@ -52,28 +51,31 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
     }
   }, []);
 
-  // Fetch phone details using email
   useEffect(() => {
     if (email) fetchPhoneStatus();
   }, [email]);
 
-  // Fetch subscription pricing details
   useEffect(() => {
     fetchPlanPricing();
   }, []);
 
-  // Calculate price when plan or billing cycle changes
   useEffect(() => {
     if (!plansData.length) return;
-    const key = planTier;
-    const monthly = plansData.find((item) => item.plan === "Monthly price");
-    const annual = plansData.find((item) => item.plan === "Annual price");
+
+    const key = planTier.toLowerCase();
+    const monthly = plansData.find(
+      (item) => String(item.plan).toLowerCase() === "monthly price"
+    );
+    const annual = plansData.find(
+      (item) => String(item.plan).toLowerCase() === "annual price"
+    );
+
     const selectedPrice =
       billingCycle === "monthly" ? monthly?.[key] : annual?.[key];
-    setPrice(selectedPrice ?? 0);
+
+    setPrice(Number(selectedPrice ?? 0));
   }, [plansData, planTier, billingCycle]);
 
-  // Fetch all subscription plans
   const fetchPlanPricing = async () => {
     try {
       const res = await axios.get(
@@ -85,21 +87,19 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
     }
   };
 
-  // Fetch phone number and verification status
   const fetchPhoneStatus = async () => {
     try {
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/auth/phone/${email}`
       );
       const phoneData = res.data[0];
-      setPhoneNumber(phoneData.phone_number);
-      setIsVerified(phoneData.phone_status === 1);
+      setPhoneNumber(phoneData?.phone_number || "");
+      setIsVerified(phoneData?.phone_status === 1);
     } catch (err) {
       console.error("Phone data fetch failed:", err);
     }
   };
 
-  // Send request to verify OTP
   const verifyOTP = async () => {
     setLoading(true);
     try {
@@ -108,6 +108,7 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
         { phone: `${countryCode} ${phoneNumber}` }
       );
       setIsVerified(true);
+      setMessage("");
       toast.success("Phone verified successfully!");
     } catch (err) {
       setMessage("Invalid OTP, try again.");
@@ -132,8 +133,9 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
     onNext(planTier, billingCycle, price);
   };
 
-  const formatPrice = (price: any) => {
-    return price.toLocaleString("en-IN"); // 'en-IN' formats the price in Indian number system
+  const formatPrice = (value: any) => {
+    const numericValue = Number(value || 0);
+    return numericValue.toLocaleString("en-IN");
   };
 
   return (
@@ -156,8 +158,6 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
         </p>
 
         <Form>
-          {/* Plan Tier Selection */}
-          {/* Plan Tier Selection */}
           <Row className="mb-3 align-items-end">
             <Col md={4}>
               <Form.Group>
@@ -166,9 +166,10 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
                   value={planTier}
                   onChange={(e) => setPlanTier(e.target.value)}
                 >
-                  <option value="platinum">Platinum</option>
-                  <option value="gold">Gold</option>
+                  <option value="bronze">Bronze</option>
                   <option value="silver">Silver</option>
+                  <option value="gold">Gold</option>
+                  <option value="platinum">Platinum</option>
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -203,7 +204,6 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
             </Col>
           </Row>
 
-          {/* Email Display */}
           <Form.Group className="mb-3">
             <Form.Label>Email ID</Form.Label>
             <Form.Control
@@ -214,7 +214,6 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
             />
           </Form.Group>
 
-          {/* Phone Verification */}
           <Form.Group className="mb-3">
             <Form.Label>Phone Number</Form.Label>
             <div className="d-flex gap-2">
@@ -225,112 +224,113 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
                 disabled={isVerified}
               >
                 {[
-                  "+1", // USA, Canada
-                  "+7", // Russia, Kazakhstan
-                  "+20", // Egypt
-                  "+27", // South Africa
-                  "+30", // Greece
-                  "+31", // Netherlands
-                  "+32", // Belgium
-                  "+33", // France
-                  "+34", // Spain
-                  "+39", // Italy
-                  "+40", // Romania
-                  "+41", // Switzerland
-                  "+44", // UK
-                  "+49", // Germany
-                  "+51", // Peru
-                  "+52", // Mexico
-                  "+55", // Brazil
-                  "+60", // Malaysia
-                  "+61", // Australia
-                  "+62", // Indonesia
-                  "+65", // Singapore
-                  "+81", // Japan
-                  "+82", // South Korea
-                  "+86", // China
-                  "+91", // India
-                  "+92", // Pakistan
-                  "+93", // Afghanistan
-                  "+94", // Sri Lanka
-                  "+95", // Myanmar
-                  "+98", // Iran
-                  "+212", // Morocco
-                  "+213", // Algeria
-                  "+218", // Libya
-                  "+220", // Gambia
-                  "+221", // Senegal
-                  "+230", // Mauritius
-                  "+234", // Nigeria
-                  "+251", // Ethiopia
-                  "+254", // Kenya
-                  "+256", // Uganda
-                  "+260", // Zambia
-                  "+263", // Zimbabwe
-                  "+298", // Faroe Islands
-                  "+351", // Portugal
-                  "+352", // Luxembourg
-                  "+355", // Albania
-                  "+358", // Finland
-                  "+371", // Latvia
-                  "+375", // Belarus
-                  "+380", // Ukraine
-                  "+381", // Serbia
-                  "+387", // Bosnia & Herzegovina
-                  "+420", // Czech Republic
-                  "+421", // Slovakia
-                  "+423", // Liechtenstein
-                  "+500", // Falkland Islands
-                  "+501", // Belize
-                  "+502", // Guatemala
-                  "+503", // El Salvador
-                  "+504", // Honduras
-                  "+505", // Nicaragua
-                  "+506", // Costa Rica
-                  "+507", // Panama
-                  "+509", // Haiti
-                  "+590", // Guadeloupe
-                  "+591", // Bolivia
-                  "+592", // Guyana
-                  "+595", // Paraguay
-                  "+597", // Suriname
-                  "+598", // Uruguay
-                  "+670", // Timor-Leste
-                  "+673", // Brunei
-                  "+852", // Hong Kong
-                  "+853", // Macau
-                  "+855", // Cambodia
-                  "+856", // Laos
-                  "+880", // Bangladesh
-                  "+886", // Taiwan
-                  "+960", // Maldives
-                  "+961", // Lebanon
-                  "+962", // Jordan
-                  "+963", // Syria
-                  "+964", // Iraq
-                  "+965", // Kuwait
-                  "+966", // Saudi Arabia
-                  "+967", // Yemen
-                  "+968", // Oman
-                  "+970", // Palestine
-                  "+971", // UAE
-                  "+972", // Israel
-                  "+973", // Bahrain
-                  "+974", // Qatar
-                  "+975", // Bhutan
-                  "+977", // Nepal
-                  "+992", // Tajikistan
-                  "+993", // Turkmenistan
-                  "+994", // Azerbaijan
-                  "+995", // Georgia
-                  "+996", // Kyrgyzstan
-                  "+998", // Uzbekistan
+                  "+1",
+                  "+7",
+                  "+20",
+                  "+27",
+                  "+30",
+                  "+31",
+                  "+32",
+                  "+33",
+                  "+34",
+                  "+39",
+                  "+40",
+                  "+41",
+                  "+44",
+                  "+49",
+                  "+51",
+                  "+52",
+                  "+55",
+                  "+60",
+                  "+61",
+                  "+62",
+                  "+65",
+                  "+81",
+                  "+82",
+                  "+86",
+                  "+91",
+                  "+92",
+                  "+93",
+                  "+94",
+                  "+95",
+                  "+98",
+                  "+212",
+                  "+213",
+                  "+218",
+                  "+220",
+                  "+221",
+                  "+230",
+                  "+234",
+                  "+251",
+                  "+254",
+                  "+256",
+                  "+260",
+                  "+263",
+                  "+298",
+                  "+351",
+                  "+352",
+                  "+355",
+                  "+358",
+                  "+371",
+                  "+375",
+                  "+380",
+                  "+381",
+                  "+387",
+                  "+420",
+                  "+421",
+                  "+423",
+                  "+500",
+                  "+501",
+                  "+502",
+                  "+503",
+                  "+504",
+                  "+505",
+                  "+506",
+                  "+507",
+                  "+509",
+                  "+590",
+                  "+591",
+                  "+592",
+                  "+595",
+                  "+597",
+                  "+598",
+                  "+670",
+                  "+673",
+                  "+852",
+                  "+853",
+                  "+855",
+                  "+856",
+                  "+880",
+                  "+886",
+                  "+960",
+                  "+961",
+                  "+962",
+                  "+963",
+                  "+964",
+                  "+965",
+                  "+966",
+                  "+967",
+                  "+968",
+                  "+970",
+                  "+971",
+                  "+972",
+                  "+973",
+                  "+974",
+                  "+975",
+                  "+977",
+                  "+992",
+                  "+993",
+                  "+994",
+                  "+995",
+                  "+996",
+                  "+998",
                 ].map((code) => (
                   <option key={code} value={code}>
                     {code}
                   </option>
                 ))}
               </Form.Select>
+
               <Form.Control
                 type="tel"
                 value={phoneNumber}
@@ -352,7 +352,6 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
 
           {message && <p className="text-center text-muted mt-2">{message}</p>}
 
-          {/* Terms and Conditions */}
           <div className={`form-check ${shakeCheckbox ? "shake" : ""}`}>
             <label
               style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
@@ -369,7 +368,11 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
               />
               <span>
                 I agree to the{" "}
-                <Link href="/page/terms-conditions" target="_blank" className="text-primary">
+                <Link
+                  href="/page/terms-conditions"
+                  target="_blank"
+                  className="text-primary"
+                >
                   terms & conditions
                 </Link>
               </span>

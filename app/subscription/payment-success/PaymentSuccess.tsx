@@ -2,9 +2,7 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "react-bootstrap";
-
 import confetti from "canvas-confetti";
-
 import Image from "next/image";
 
 const SuccessPage = () => {
@@ -14,47 +12,80 @@ const SuccessPage = () => {
   const planDuration = searchParams.get("duration");
 
   const getPlanValidity = (planType: any) => {
-    const currentDate = new Date(); // Get the current date
+    const currentDate = new Date();
     if (planType === "annual") {
-      currentDate.setDate(currentDate.getDate() + 365); // Add 365 days for annual plan
+      currentDate.setDate(currentDate.getDate() + 365);
     } else if (planType === "monthly") {
-      currentDate.setDate(currentDate.getDate() + 30); // Add 30 days for monthly plan
+      currentDate.setDate(currentDate.getDate() + 30);
     }
 
-    return currentDate.toISOString().split("T")[0]; // Return in YYYY-MM-DD format
+    return currentDate.toISOString().split("T")[0];
   };
 
   const planExpiryDate = getPlanValidity(planDuration);
 
-  var duration = 5 * 1000;
-  var animationEnd = Date.now() + duration;
-  var defaults = { startVelocity: 50, spread: 500, ticks: 50, zIndex: 0 };
+  const getPlanTextClass = (planName: string | null) => {
+    switch (planName) {
+      case "bronze":
+        return "text-warning";
+      case "silver":
+        return "text-secondary";
+      case "gold":
+        return "text-success";
+      case "platinum":
+        return "text-primary";
+      default:
+        return "text-info";
+    }
+  };
+
+  const getPlanButtonVariant = (planName: string | null) => {
+    switch (planName) {
+      case "bronze":
+        return "warning";
+      case "silver":
+        return "secondary";
+      case "gold":
+        return "success";
+      case "platinum":
+        return "primary";
+      default:
+        return "info";
+    }
+  };
+
+  const duration = 5 * 1000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 50, spread: 500, ticks: 50, zIndex: 0 };
 
   function randomInRange(min: number, max: number) {
     return Math.random() * (max - min) + min;
   }
 
   useEffect(() => {
-    var interval = setInterval(function () {
-      var timeLeft = animationEnd - Date.now();
+    const interval = setInterval(function () {
+      const timeLeft = animationEnd - Date.now();
 
       if (timeLeft <= 0) {
         return clearInterval(interval);
       }
 
-      var particleCount = 200 * (timeLeft / duration);
-      // since particles fall down, start a bit higher than random
+      const particleCount = 200 * (timeLeft / duration);
+
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
       });
+
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
       });
     }, 350);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -63,10 +94,6 @@ const SuccessPage = () => {
         className="text-center p-5 bg-white shadow-lg rounded-4 border-secondary"
         style={{ maxWidth: "1000px" }}
       >
-        {/* <PiCheckCircleFill size={80} className="text-success mb-3" /> */}
-        {/* <div
-          style={{ aspectRatio: "1/1", width: "100%", position: "relative" }}
-        > */}
         <Image
           alt="payment-success"
           src="/images/payment successful.png"
@@ -77,34 +104,15 @@ const SuccessPage = () => {
 
         <h2 className="fw-bold text-dark">
           Your payment for{" "}
-          <span
-            className={
-              plan == "gold"
-                ? "text-warning"
-                : plan == "silver"
-                ? "text-secondary"
-                : plan == "platinum"
-                ? "text-primary"
-                : "text-info"
-            }
-          >
+          <span className={getPlanTextClass(plan)}>
             {plan?.toUpperCase()}
           </span>{" "}
           plan is successful!
         </h2>
+
         <p className="text-muted">
           Your{" "}
-          <span
-            className={
-              plan == "gold"
-                ? "text-warning"
-                : plan == "silver"
-                ? "text-secondary"
-                : plan == "platinum"
-                ? "text-primary"
-                : "text-info"
-            }
-          >
+          <span className={getPlanTextClass(plan)}>
             {plan}
           </span>{" "}
           is now active and valid until <strong>{planExpiryDate}</strong>.
@@ -115,15 +123,11 @@ const SuccessPage = () => {
           </a>
           .
         </p>
-        <Button variant={
-              plan == "gold"
-                ? "warning"
-                : plan == "silver"
-                ? "secondary"
-                : plan == "platinum"
-                ? "primary"
-                : "info"
-            } onClick={() => router.push("/profile")}>
+
+        <Button
+          variant={getPlanButtonVariant(plan)}
+          onClick={() => router.push("/profile")}
+        >
           Explore Now
         </Button>
       </div>

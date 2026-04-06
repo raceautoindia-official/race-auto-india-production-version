@@ -1,11 +1,25 @@
 import mysql from "mysql2/promise";
 
 // Create the connection to database
+// const db = mysql.createPool({
+//   host: "localhost",
+//   user: "deploy",
+//   database: "race_news",
+//   password: "e9b5vwCxt%9AWHEERJQZNfmTwQC%eXn2iq`EnDKj",
+//   waitForConnections: true,
+//   connectionLimit: 500,
+//   maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`
+//   idleTimeout: 60000, // idle connections timeout, in milliseconds, the default value 60000
+//   queueLimit: 0,
+//   enableKeepAlive: true,
+//   keepAliveInitialDelay: 0,
+// });
+
 const db = mysql.createPool({
   host: "localhost",
-  user: "deploy",
+  user: "root",
   database: "race_news",
-  password: "e9b5vwCxt%9AWHEERJQZNfmTwQC%eXn2iq`EnDKj",
+  password: "Race@2023",
   waitForConnections: true,
   connectionLimit: 500,
   maxIdle: 10, // max idle connections, the default value is the same as `connectionLimit`

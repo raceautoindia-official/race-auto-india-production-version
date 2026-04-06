@@ -5,6 +5,7 @@ import { Table, Button } from "react-bootstrap";
 import ReactPaginate from "react-paginate";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import Link from "next/link";
+import { getPlanLabel, getPlanNameFromCode } from "@/lib/subscriptionPlan";
 
 export type User = {
   id: number;
@@ -69,14 +70,16 @@ const SubscriberTable = () => {
                   <td>{user.email}</td>
                   <td>{user.phone_number}</td>
                   <td>
-                    {user.subscription == 1
-                      ? "Silver"
-                      : user.subscription == 2
-                      ? "Gold"
-                      : user.subscription == 3
-                      ? "Platinum"
-                      : "Bronze"}
-                  </td>
+  {user.subscription == 1
+    ? "Bronze"
+    : user.subscription == 2
+    ? "Silver"
+    : user.subscription == 3
+    ? "Gold"
+    : user.subscription == 4
+    ? "Platinum"
+    : "No Plan"}
+</td>
                   
                   <td>
                     <Link href={`/admin/subscription/subscribers/${user.id}`}>
