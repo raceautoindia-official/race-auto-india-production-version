@@ -145,7 +145,7 @@ const Navbar_V2 = async () => {
               <li className="nav-item" style={{ fontWeight: 800 }}>
                 <Link
                   className={`${styles.flash_link} nav-link mx-2`}
-                  href="https://raceautoanalytics.com/flash-reports"
+                  href="https://raceautoanalytics.com/flash-reports/overview"
                 >
                   <FaBolt className={styles.thunder_icon} size={13} />
                   FLASH REPORTS
@@ -154,7 +154,7 @@ const Navbar_V2 = async () => {
               <li className="nav-item" style={{ fontWeight: 800 }}>
                 <Link
                   className={`${styles.flash_link} nav-link mx-2 d-flex align-items-center`}
-                  href="https://raceautoanalytics.com/forecast"
+                  href="https://raceautoanalytics.com/forecast/overview"
                 >
                   <BsBarChartLineFill
                     size={16}

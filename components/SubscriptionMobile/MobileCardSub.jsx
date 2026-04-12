@@ -1,89 +1,115 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 import { IoMdCloseCircle } from 'react-icons/io';
 import { IoChevronBackCircle } from 'react-icons/io5';
 import MobilePricingCard from './SubscriptionCardMobile';
-import SubscriptionForm from '@/app/subscription/component/subscription-v2/SubscriptionForm';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
+import './styles/subscriptionMobileCard.css';
+
+const PLAN_UI_TITLE = {
+  bronze: 'Individual Basic',
+  silver: 'Individual Pro',
+  gold: 'Business',
+  platinum: 'Business Pro',
+};
+
+const PLAN_META = {
+  bronze: {
+    subtitle: 'Built for individual professionals who need premium news access and a clean entry plan.',
+    segmentLabel: 'Individual Plan',
+    userCount: null,
+  },
+  silver: {
+    subtitle: 'Designed for advanced individual users who need more tools and broader content access.',
+    segmentLabel: 'Individual Plan',
+    userCount: null,
+  },
+  gold: {
+    subtitle: 'For growing teams that need shared business access for up to 5 users.',
+    segmentLabel: 'Business Plan',
+    userCount: '5 Users',
+  },
+  platinum: {
+    subtitle: 'For enterprise-ready teams that need broader business access for up to 10 users.',
+    segmentLabel: 'Business Plan',
+    userCount: '10 Users',
+  },
+};
 
 export default function PricingPlans({ hide }) {
   const [planData, setPlanData] = useState([]);
   const [currency, setCurrency] = useState('INR');
-  const [billing, setBilling] = useState('Yearly');
+  const [isYear, setIsYear] = useState(true);
+  const [categoryView, setCategoryView] = useState('individual');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState(null);
+  const [hasToken, setHasToken] = useState(false);
   const [subcriptionData, setSubcriptionData] = useState([]);
 
   useEffect(() => {
     const token = Cookies.get('authToken');
     if (token) {
-      setToken(token);
-      const decoded = jwtDecode(token);
-      setEmail(decoded.email);
+      setHasToken(true);
+      try {
+        const decoded = jwtDecode(token);
+        setEmail(decoded.email || '');
+      } catch (error) {
+        console.error(error);
+      }
     }
   }, []);
-
-  useEffect(() => {
-    if (email !== '') {
-      axios
-        .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/purchase/${email}`)
-        .then((res) => setSubcriptionData(res.data))
-        .catch((err) => console.error(err));
-    }
-  }, [email]);
 
   useEffect(() => {
     axios
       .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription`)
-      .then((res) => setPlanData(res.data))
+      .then((res) => setPlanData(res.data || []))
       .catch(console.error);
   }, []);
 
+  useEffect(() => {
+    if (!email) return;
+
+    axios
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/purchase/${email}`)
+      .then((res) => setSubcriptionData(res.data || []))
+      .catch((err) => {
+        console.error(err);
+        setSubcriptionData([]);
+      });
+  }, [email]);
+
   const pricingKeys = ['monthly price', 'annual price', 'usd', 'multiplied_price'];
-  const features = planData.filter((item) => !pricingKeys.includes(item.plan.toLowerCase()));
-  const monthly = planData.find((item) => item.plan.toLowerCase() === 'monthly price') || {};
-  const annual = planData.find((item) => item.plan.toLowerCase() === 'annual price') || {};
-  const multiplied = planData.find((item) => item.plan.toLowerCase() === 'multiplied_price') || {};
-  const usdRate = planData.find((item) => item.plan.toLowerCase() === 'usd')?.platinum || 1;
+
+  const features = planData.filter(
+    (item) => !pricingKeys.includes(String(item.plan).toLowerCase())
+  );
+  const monthly = planData.find(
+    (item) => String(item.plan).toLowerCase() === 'monthly price'
+  ) || {};
+  const annual = planData.find(
+    (item) => String(item.plan).toLowerCase() === 'annual price'
+  ) || {};
+  const multiplied = planData.find(
+    (item) => String(item.plan).toLowerCase() === 'multiplied_price'
+  ) || {};
+  const usdRate =
+    planData.find((item) => String(item.plan).toLowerCase() === 'usd')?.platinum || 1;
 
   const makePlan = (tier) => {
-    const rawPrice = billing === 'Monthly' ? monthly[tier] ?? 0 : annual[tier] ?? 0;
+    const rawPrice = isYear ? annual[tier] ?? 0 : monthly[tier] ?? 0;
     const priceValue =
-      currency === 'USD'
-        ? Math.round((rawPrice / usdRate) * 100) / 100
-        : rawPrice;
-
-    const config = {
-      bronze: {
-        backgroundColor: '#f6ede3',
-        icon: '🥉',
-        description: 'For Individual Professionals',
-      },
-      silver: {
-        backgroundColor: '#F7F7F7',
-        icon: '✰',
-        description: 'For Growing Businesses',
-      },
-      gold: {
-        backgroundColor: '#e4e4e4',
-        icon: '✯',
-        description: 'For Expanding Enterprises',
-      },
-      platinum: {
-        backgroundColor: '#DBDBDB',
-        icon: '💎',
-        description: 'For Large Corporations',
-        badge: 'Popular',
-      },
-    }[tier];
+      currency === 'USD' ? Math.round((rawPrice / usdRate) * 100) / 100 : rawPrice;
 
     return {
-      id: tier,
-      title: tier.charAt(0).toUpperCase() + tier.slice(1),
-      subtitle: config.description,
+      key: tier,
+      planKey: tier,
+      title: PLAN_UI_TITLE[tier] ?? tier,
+      subtitle: PLAN_META[tier]?.subtitle || '',
+      segmentLabel: PLAN_META[tier]?.segmentLabel || '',
+      userCount: PLAN_META[tier]?.userCount || null,
       price: priceValue,
       multipliedPrice: multiplied[tier] ?? 1,
       features: features.map((f) => ({
@@ -91,142 +117,153 @@ export default function PricingPlans({ hide }) {
         available: f[tier],
         description: f.description || '',
       })),
-      color: config.backgroundColor,
-      icon: config.icon,
-      isPopular: Boolean(config.badge),
       currency,
-      isYear: billing === 'Yearly',
+      isYear,
+      isPopular: tier === 'platinum',
     };
   };
 
-  const plans = ['bronze', 'silver', 'gold', 'platinum'].map((tier) => makePlan(tier));
+  const visiblePlanKeys = useMemo(() => {
+    return categoryView === 'individual'
+      ? ['bronze', 'silver']
+      : ['gold', 'platinum'];
+  }, [categoryView]);
+
+  const plans = useMemo(() => {
+    return visiblePlanKeys.map((tier) => makePlan(tier));
+  }, [visiblePlanKeys, planData, currency, isYear]);
+
+  const currentMeta =
+    categoryView === 'individual'
+      ? {
+          eyebrow: 'Individual Membership',
+          description:
+            'Compare the individual plans only, with a cleaner mobile layout built for solo users.',
+        }
+      : {
+          eyebrow: 'Business Membership',
+          description:
+            'Compare the business plans only, with shared-access pricing for teams and enterprises.',
+        };
 
   return (
-    <div className="container pb-5 pt-2 mb-5">
-      <div>
+    <div className="mobile-subscription-shell">
+      <div className="mobile-subscription-shell__header">
         {!selectedPlan ? (
-          <IoMdCloseCircle size={30} onClick={hide} color="black" />
+          <button
+            type="button"
+            className="mobile-subscription-shell__icon-button"
+            onClick={hide}
+            aria-label="Close"
+          >
+            <IoMdCloseCircle size={28} />
+          </button>
         ) : (
-          <IoChevronBackCircle
-            size={30}
-            color="black"
+          <button
+            type="button"
+            className="mobile-subscription-shell__icon-button"
             onClick={() => setSelectedPlan(null)}
-          />
+            aria-label="Back"
+          >
+            <IoChevronBackCircle size={28} />
+          </button>
         )}
       </div>
 
       {!selectedPlan ? (
         <>
-          <h4 className="mb-4 text-center">Grow better with the right plan</h4>
+          <div className="mobile-subscription-hero">
+            <span className="mobile-subscription-hero__eyebrow">Subscription Plans</span>
+            <h4 className="mobile-subscription-hero__title">Grow better with the right plan</h4>
+            <p className="mobile-subscription-hero__subtitle">
+              Choose only the relevant plan group and compare a cleaner set of cards on mobile.
+            </p>
+          </div>
 
-          <div className="d-flex align-items-center justify-content-center mb-4">
-            <div className="btn-group bg-secondary me-3" role="group" style={{ borderRadius: 20 }}>
-              <button
-                type="button"
-                className={`btn ${currency === 'INR' ? 'btn-dark text-white' : 'text-white'}`}
-                onClick={() => setCurrency('INR')}
-              >
-                INR
-              </button>
-              <button
-                type="button"
-                className={`btn ${currency === 'USD' ? 'btn-dark text-white' : 'text-white'}`}
-                onClick={() => setCurrency('USD')}
-              >
-                USD
-              </button>
+          <div className="mobile-subscription-controls">
+            <div className="mobile-subscription-toggle-row">
+              <div className="mobile-subscription-toggle-group">
+                <button
+                  type="button"
+                  className={currency === 'INR' ? 'is-active' : ''}
+                  onClick={() => setCurrency('INR')}
+                >
+                  INR
+                </button>
+                <button
+                  type="button"
+                  className={currency === 'USD' ? 'is-active' : ''}
+                  onClick={() => setCurrency('USD')}
+                >
+                  USD
+                </button>
+              </div>
+
+              <div className="mobile-subscription-toggle-group">
+                <button
+                  type="button"
+                  className={!isYear ? 'is-active' : ''}
+                  onClick={() => setIsYear(false)}
+                >
+                  Month
+                </button>
+                <button
+                  type="button"
+                  className={isYear ? 'is-active' : ''}
+                  onClick={() => setIsYear(true)}
+                >
+                  Yearly
+                </button>
+              </div>
             </div>
 
-            <div className="btn-group bg-secondary" role="group" style={{ borderRadius: 20 }}>
-              <button
-                type="button"
-                className={`btn ${billing === 'Monthly' ? 'btn-dark text-white' : 'text-white'}`}
-                onClick={() => setBilling('Monthly')}
-              >
-                Month
-              </button>
-              <button
-                type="button"
-                className={`btn ${billing === 'Yearly' ? 'btn-dark text-white' : 'text-white'}`}
-                onClick={() => setBilling('Yearly')}
-              >
-                Yearly
-              </button>
+            <div className="mobile-subscription-toggle-row">
+              <div className="mobile-subscription-toggle-group mobile-subscription-toggle-group--full">
+                <button
+                  type="button"
+                  className={categoryView === 'individual' ? 'is-active' : ''}
+                  onClick={() => setCategoryView('individual')}
+                >
+                  Individuals
+                </button>
+                <button
+                  type="button"
+                  className={categoryView === 'business' ? 'is-active' : ''}
+                  onClick={() => setCategoryView('business')}
+                >
+                  Business
+                </button>
+              </div>
+            </div>
+
+            <div className="mobile-subscription-summary">
+            
+              <p className="mobile-subscription-summary__text">{currentMeta.description}</p>
             </div>
           </div>
 
-          <div className="row">
-            {plans.map((plan) => {
-              const userPlan =
-                subcriptionData.length > 0 ? subcriptionData[0].plan_name : null;
-
-              const isUserSubscribed =
-                subcriptionData.length !== 0 &&
-                subcriptionData[0]?.end_date &&
-                new Date(subcriptionData[0].end_date) > new Date();
-
-              const isThisUserPlan =
-                isUserSubscribed && userPlan === plan.title.toLowerCase();
-
-              return (
-                <div key={plan.id} className="col-12 mb-4">
-                  <div
-                    className="card h-100 border p-3"
-                    style={{ backgroundColor: plan.color, borderRadius: 20 }}
-                  >
-                    {plan.isPopular && (
-                      <span
-                        className="badge bg-success position-absolute"
-                        style={{ top: '4rem', right: '2rem' }}
-                      >
-                        Popular
-                      </span>
-                    )}
-
-                    {isThisUserPlan && (
-                      <span
-                        className="badge bg-warning position-absolute"
-                        style={{ top: '4rem', right: '2rem' }}
-                      >
-                        Your Plan
-                      </span>
-                    )}
-
-                    <div className="d-flex align-items-center mb-3">
-                      <span className="fs-4 me-2" style={{ color: 'black' }}>
-                        {plan.icon}
-                      </span>
-                      <h5 className="card-title mb-0" style={{ color: 'black' }}>
-                        {plan.title}
-                      </h5>
-                      <p
-                        className="text-decoration-none ms-auto"
-                        style={{ color: 'blue', cursor: 'pointer' }}
-                        onClick={() => setSelectedPlan(makePlan(plan.id))}
-                      >
-                        See Details &gt;
-                      </p>
-                    </div>
-
-                    <h3 className="card-text fw-bold" style={{ color: 'black' }}>
-                      {currency === 'USD' ? `$${plan.price}` : `₹${plan.price}`}
-                      <small className="text-muted">/{billing === 'Monthly' ? 'mo' : 'yr'}</small>
-                    </h3>
-
-                    <div className="d-flex justify-content-between align-items-center">
-                      <p style={{ color: 'black' }}>{plan.subtitle}</p>
-                      {!isThisUserPlan && (
-                        <SubscriptionForm plan={plan.title.toLowerCase()} />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mobile-subscription-plan-list">
+            {plans.map((plan) => (
+              <MobilePricingCard
+                key={plan.key}
+                {...plan}
+                subscriptionData={subcriptionData}
+                hasToken={hasToken}
+                isPreview
+                onDetails={() => setSelectedPlan(plan)}
+              />
+            ))}
           </div>
         </>
       ) : (
-        <MobilePricingCard {...selectedPlan} />
+        <div className="mobile-subscription-detail-view">
+          <MobilePricingCard
+            {...selectedPlan}
+            subscriptionData={subcriptionData}
+            hasToken={hasToken}
+            isPreview={false}
+          />
+        </div>
       )}
     </div>
   );

@@ -1,202 +1,288 @@
 'use client';
-import React, { useEffect, useState } from "react";
-import { PiCheckCircleFill, PiXCircleFill } from "react-icons/pi";
-import { IoDiamond } from "react-icons/io5";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
-import './styles/subscriptionMobileCard.css';
-import SubscriptionForm from "@/app/subscription/component/subscription-v2/SubscriptionForm";
-import { Tooltip } from "react-tooltip";
 
+import React, { useMemo } from 'react';
+import { PiCheckCircleFill, PiXCircleFill } from 'react-icons/pi';
+import { IoDiamond } from 'react-icons/io5';
+import { Tooltip } from 'react-tooltip';
+import SubscriptionForm from '@/app/subscription/component/subscription-v2/SubscriptionForm';
+import './styles/subscriptionMobileCard.css';
+
+const PLAN_RANK = {
+  bronze: 1,
+  silver: 2,
+  gold: 3,
+  platinum: 4,
+};
+
+const CARD_META = {
+  bronze: {
+    accent: '#b28b47',
+    accentSoft: 'rgba(178, 139, 71, 0.12)',
+    titleColor: '#8c651e',
+    iconSrc: '/images/bronze.png',
+    iconAlt: 'Bronze icon',
+  },
+  silver: {
+    accent: '#64748b',
+    accentSoft: 'rgba(100, 116, 139, 0.12)',
+    titleColor: '#334155',
+    iconSrc: '/images/silver.jpg',
+    iconAlt: 'Silver icon',
+  },
+  gold: {
+    accent: '#c3932d',
+    accentSoft: 'rgba(195, 147, 45, 0.12)',
+    titleColor: '#a26708',
+    iconSrc: '/images/gold-star.png',
+    iconAlt: 'Gold icon',
+  },
+  platinum: {
+    accent: '#0f172a',
+    accentSoft: 'rgba(15, 23, 42, 0.08)',
+    titleColor: '#0f172a',
+    iconSrc: '/images/platinum.png',
+    iconAlt: 'Platinum icon',
+  },
+};
 
 export default function MobilePricingCard({
   title,
+  planKey,
   subtitle,
   price,
   multipliedPrice,
   features,
-  color,
-  icon,
-  isPopular,
   currency,
-  isYear
+  isYear,
+  isPopular,
+  segmentLabel,
+  userCount,
+  subscriptionData = [],
+  hasToken = false,
+  isPreview = true,
+  onDetails,
 }) {
-  const [email, setEmail] = useState("");
-  const [token, setToken] = useState(null);
-  const [subcriptionData, setSubcriptionData] = useState([]);
+  const meta = CARD_META[planKey] || CARD_META.bronze;
 
-  useEffect(() => {
-    const token = Cookies.get("authToken");
-    if (token) {
-      setToken(token);
-      const decoded = jwtDecode(token);
-      setEmail(decoded.email);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (email !== "") {
-      axios
-        .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/purchase/${email}`)
-        .then(res => setSubcriptionData(res.data))
-        .catch(err => console.log(err));
-    }
-  }, [email]);
-
-  const userPlan = subcriptionData.length > 0 ? subcriptionData[0].plan_name : null;
-  const isUserSubscribed = subcriptionData.length !== 0 && new Date(subcriptionData[0].end_date) > new Date();
-  const isThisUserPlan = isUserSubscribed && userPlan === title.toLowerCase();
-  const isSilverPlan = title.toLowerCase() === "silver";
-
-  const shouldShowYourPlanBadge = isThisUserPlan || (!token && isSilverPlan);
-
-  const fakePrice = typeof price === "number" && typeof multipliedPrice === "number"
-    ? price * multipliedPrice
-    : null;
+  const fakePrice =
+    typeof price === 'number' && typeof multipliedPrice === 'number'
+      ? price * multipliedPrice
+      : null;
 
   const discountPercent =
-    typeof fakePrice === "number" && typeof price === "number"
+    typeof fakePrice === 'number' && typeof price === 'number' && fakePrice > price
       ? Math.round(((fakePrice - price) / fakePrice) * 100)
       : null;
 
-  const imageSrc = {
-    gold: "/images/gold-star.png",
-    silver: "/images/silver.jpg",
-    platinum: "/images/platinum.png"
+  const userPlan = subscriptionData.length > 0 ? subscriptionData[0]?.plan_name : null;
+
+  const isUserSubscribed =
+    subscriptionData.length !== 0 &&
+    subscriptionData[0]?.end_date &&
+    new Date(subscriptionData[0].end_date) > new Date();
+
+  const currentPlanRank = isUserSubscribed ? PLAN_RANK[userPlan] || 0 : 0;
+  const viewedPlanRank = PLAN_RANK[planKey] || 0;
+
+  const isThisUserPlan = isUserSubscribed && userPlan === planKey;
+  const isLowerThanCurrent = isUserSubscribed && currentPlanRank > viewedPlanRank;
+
+  const orderedFeatures = useMemo(() => {
+    return (features || [])
+      .filter((feature) => feature.available !== 2)
+      .sort((a, b) => {
+        const order = { 1: 0, 3: 1, 4: 2, 0: 3 };
+        return order[a.available] - order[b.available];
+      });
+  }, [features]);
+
+  const visibleFeatures = isPreview ? orderedFeatures.slice(0, 4) : orderedFeatures;
+
+  const normalizeFeatureLabel = (label) => {
+    if (!label) return '';
+    let text = label;
+    if (planKey === 'silver') {
+      text = text.replace(/Everything in Silver Plan/gi, 'Everything in Bronze Plan');
+    }
+    return text;
+  };
+
+  const renderActionButton = () => {
+    if (isThisUserPlan) {
+      return (
+        <button type="button" className="mobile-subscription-card__action-btn is-disabled" disabled>
+          Current Plan
+        </button>
+      );
+    }
+
+    if (isLowerThanCurrent) {
+      return (
+        <button type="button" className="mobile-subscription-card__action-btn is-disabled" disabled>
+          Included in Your Plan
+        </button>
+      );
+    }
+
+    return <SubscriptionForm plan={planKey} />;
   };
 
   return (
-    <div
-      className={`mobile-pricing-card ${shouldShowYourPlanBadge ? "active-plan" : ""}`}
-      style={{
-        backgroundColor: color,
-        position: 'relative',
-        boxShadow: shouldShowYourPlanBadge
-          ? '0 0 18px rgba(218, 165, 32, 0.6)'
-          : isSilverPlan
-            ? '0 0 12px rgba(192,192,192,0.5)'
-            : '0 4px 12px rgba(0, 0, 0, 0.1)',
-        border: shouldShowYourPlanBadge
-          ? '2px solid gold'
-          : isSilverPlan
-            ? '1px solid #d0d0d0'
-            : 'none',
-      }}
+    <article
+      className={`mobile-subscription-card ${isThisUserPlan ? 'mobile-subscription-card--current' : ''}`}
+      style={{ '--card-accent': meta.accent }}
     >
-      {discountPercent && discountPercent > 0 && !isSilverPlan && (
-        <span className="badge bg-danger position-absolute top-0 start-0 m-2">
-          {discountPercent}% OFF
-        </span>
-      )}
+      <div className="mobile-subscription-card__badges">
+        {discountPercent && discountPercent > 0 && (
+          <span className="mobile-subscription-card__badge mobile-subscription-card__badge--discount">
+            {discountPercent}% Off
+          </span>
+        )}
 
-      {isPopular && !isSilverPlan && <div className="popular-badge">Popular</div>}
-      {shouldShowYourPlanBadge && (
-        <div className="active-badge animate-pulse">Your Plan</div>
-      )}
+        {isPopular && (
+          <span className="mobile-subscription-card__badge mobile-subscription-card__badge--popular">
+            Popular
+          </span>
+        )}
 
-      {["gold", "silver", "platinum"].includes(title.toLowerCase()) && (
-        <img src={imageSrc[title.toLowerCase()]} alt={`${title} Plan`} className="corner-icon" />
-      )}
+        {isThisUserPlan && (
+          <span className="mobile-subscription-card__badge mobile-subscription-card__badge--current">
+            Your Plan
+          </span>
+        )}
+      </div>
 
-      <h3 className="plan-title">{title}</h3>
+      <div className="mobile-subscription-card__top">
+        <div className="mobile-subscription-card__title-wrap">
+          <h3
+            className="mobile-subscription-card__title"
+            style={{ color: meta.titleColor }}
+          >
+            {title}
+          </h3>
 
-      {isSilverPlan && (
-        <div className="free-badge">Free Plan</div>
-      )}
+          <div className="mobile-subscription-card__tags">
+            <span
+              className="mobile-subscription-card__tag"
+              style={{ background: meta.accentSoft, color: meta.titleColor }}
+            >
+              {segmentLabel}
+            </span>
 
-      <p className="plan-subtitle">{subtitle}</p>
+            {userCount && (
+              <span className="mobile-subscription-card__tag">{userCount}</span>
+            )}
+          </div>
+        </div>
 
-      <div className="price-section" style={{ textAlign: "center" }}>
-        {fakePrice && !isSilverPlan && (
-          <div className="fake-price">
-            {fakePrice.toLocaleString("en-US", {
-              style: "currency",
-              currency: currency || "INR",
+        <div className="mobile-subscription-card__icon">
+          <img src={meta.iconSrc} alt={meta.iconAlt} />
+        </div>
+      </div>
+
+      <p className="mobile-subscription-card__subtitle">{subtitle}</p>
+
+      <div className="mobile-subscription-card__price-box">
+        {fakePrice && fakePrice > price && (
+          <div className="mobile-subscription-card__old-price">
+            {fakePrice.toLocaleString('en-US', {
+              style: 'currency',
+              currency: currency || 'INR',
             })}
-            <span className="strike-line" />
           </div>
         )}
 
-        <h2 className="plan-price" style={{ color: isSilverPlan ? '#7c7c7c' : 'black' }}>
-          {isSilverPlan ? '₹0' :
-            typeof price === "number"
-              ? price.toLocaleString("en-US", {
-                style: "currency",
-                currency: currency || "INR",
-              })
-              : "N/A"}
-          <span>/{isYear ? "yr" : "mo"}</span>
-        </h2>
+        <div className="mobile-subscription-card__price-row">
+          <div className="mobile-subscription-card__price">
+            {typeof price === 'number'
+              ? price.toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: currency || 'INR',
+                })
+              : 'N/A'}
+          </div>
+          <div className="mobile-subscription-card__cycle">/{isYear ? 'year' : 'month'}</div>
+        </div>
       </div>
 
-      <ul className="feature-list">
-        {features
-          .filter(f => f.available !== 2)
-          .sort((a, b) => {
-            const order = { 1: 0, 3: 1, 4: 2, 0: 3 };
-            return order[a.available] - order[b.available];
-          })
-          .map((f, i) => {
-            const tooltipId = `m-tip-${i}`;
-            const iconStyle = { marginRight: "8px", verticalAlign: "middle" };
+      <ul className="mobile-subscription-card__feature-list">
+        {visibleFeatures.map((feature, index) => {
+          const tooltipId = `mobile-tip-${planKey}-${index}`;
+          const featureText = normalizeFeatureLabel(feature.plan);
 
-            if (f.available === 1) {
-              return (
-                <li key={i} className="text-success fw-semibold">
-                  <PiCheckCircleFill style={iconStyle} />
-                  <span data-tooltip-id={tooltipId} data-tooltip-html={f.description || ""}>
-                    {f.plan}
-                  </span>
-                  <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
-                </li>
-              );
-            }
+          const tooltipProps = {
+            'data-tooltip-id': tooltipId,
+            'data-tooltip-html': feature.description || '',
+          };
 
-            if (f.available === 3) {
-              return (
-                <li key={i} className="text-warning fw-bold">
-                  <IoDiamond style={iconStyle} />
-                  <span data-tooltip-id={tooltipId} data-tooltip-html={f.description || ""}>
-                    {f.plan}
-                  </span>
-                  <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
-                  <span className="sparkled_badge" style={{color:'black'}}>Featured</span>
-                </li>
-              );
-            }
+          if (feature.available === 1) {
+            return (
+              <li key={index} className="mobile-subscription-card__feature-item">
+                <PiCheckCircleFill
+                  className="mobile-subscription-card__feature-icon"
+                  color="#15803d"
+                />
+                <span className="mobile-subscription-card__feature-text" {...tooltipProps}>
+                  {featureText}
+                </span>
+                <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
+              </li>
+            );
+          }
 
-            if (f.available === 4) {
-              return (
-                <li key={i} className="text-info fw-bold">
-                  <span data-tooltip-id={tooltipId} data-tooltip-html={f.description || ""}>
-                    {f.plan}
-                  </span>
-                  <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
-                  <span className="new-badge">New</span>
-                </li>
-              );
-            }
+          if (feature.available === 3) {
+            return (
+              <li key={index} className="mobile-subscription-card__feature-item is-featured">
+                <IoDiamond className="mobile-subscription-card__feature-icon" color="#d97706" />
+                <span className="mobile-subscription-card__feature-text" {...tooltipProps}>
+                  {featureText}
+                </span>
+                <span className="mobile-subscription-card__feature-pill">Featured</span>
+                <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
+              </li>
+            );
+          }
 
-            if (f.available === 0) {
-              return (
-                <li key={i} className="text-muted" style={{ opacity: 0.6 }}>
-                  <PiXCircleFill style={iconStyle} />
-                  <span data-tooltip-id={tooltipId} data-tooltip-html={f.description || ""}>
-                    {f.plan}
-                  </span>
-                  <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
-                </li>
-              );
-            }
+          if (feature.available === 4) {
+            return (
+              <li key={index} className="mobile-subscription-card__feature-item is-new">
+                <span className="mobile-subscription-card__feature-text" {...tooltipProps}>
+                  {featureText}
+                </span>
+                <span className="mobile-subscription-card__feature-pill is-new">New</span>
+                <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
+              </li>
+            );
+          }
 
-            return null;
-          })}
+          return (
+            <li key={index} className="mobile-subscription-card__feature-item is-disabled">
+              <PiXCircleFill
+                className="mobile-subscription-card__feature-icon"
+                color="#94a3b8"
+              />
+              <span className="mobile-subscription-card__feature-text" {...tooltipProps}>
+                {featureText}
+              </span>
+              <Tooltip id={tooltipId} className="custom-tooltip" place="top" html />
+            </li>
+          );
+        })}
       </ul>
 
-      {!isSilverPlan && !shouldShowYourPlanBadge && (
-        <SubscriptionForm plan={title.toLowerCase()} />
+      {isPreview && orderedFeatures.length > 4 && (
+        <button
+          type="button"
+          className="mobile-subscription-card__details-link"
+          onClick={onDetails}
+        >
+          See full details
+        </button>
       )}
-    </div>
+
+      <div className="mobile-subscription-card__action">
+        {renderActionButton()}
+      </div>
+    </article>
   );
 }

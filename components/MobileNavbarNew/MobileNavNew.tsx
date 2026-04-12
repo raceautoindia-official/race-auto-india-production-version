@@ -428,7 +428,7 @@ const MobileNavNew = () => {
 
         {/* Bottom Navigation */}
         <div className={styles.navigation}>
-          <Link href="https://raceautoanalytics.com/flash-reports">
+          <Link href="https://raceautoanalytics.com/flash-reports/overview">
             <div className={styles.navItem}>
               <TbChartHistogram
                 color={iconColor}
@@ -439,7 +439,7 @@ const MobileNavNew = () => {
             </div>
           </Link>
 
-          <Link href="https://raceautoanalytics.com/forecast">
+          <Link href="https://raceautoanalytics.com/forecast/overview">
             <div className={styles.navItem}>
               <BiLineChart color={iconColor} size={iconSize} title="Forecast" />
               <span className={styles.caption}>Forecast</span>

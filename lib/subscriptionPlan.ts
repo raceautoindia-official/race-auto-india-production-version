@@ -102,3 +102,32 @@ export function getPlanAction(currentPlan: any, viewedPlan: any) {
   if (currentRank > viewedRank) return "included";
   return "upgrade";
 }
+
+// UI display titles — Bronze/Silver/Gold/Platinum are NOT shown as main labels in UI.
+// Internal DB values remain bronze/silver/gold/platinum.
+export const PLAN_UI_TITLE: Record<string, string> = {
+  none: "No Plan",
+  bronze: "Individual Basic",
+  silver: "Individual Pro",
+  gold: "Business",
+  platinum: "Business Pro",
+};
+
+export function getPlanUITitle(plan: any): string {
+  return PLAN_UI_TITLE[normalizePlanName(plan)] ?? "No Plan";
+}
+
+// Business seat limits — gold=5, platinum=10
+export const BUSINESS_SEAT_LIMIT: Record<string, number> = {
+  gold: 5,
+  platinum: 10,
+};
+
+export function isBusinessPlan(plan: any): boolean {
+  const p = normalizePlanName(plan);
+  return p === "gold" || p === "platinum";
+}
+
+export function getBusinessSeatLimit(plan: any): number {
+  return BUSINESS_SEAT_LIMIT[normalizePlanName(plan)] ?? 0;
+}

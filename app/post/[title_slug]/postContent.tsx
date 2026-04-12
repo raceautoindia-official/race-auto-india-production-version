@@ -104,7 +104,7 @@ const PostContent = ({
   const shouldLimitContent = !decoded && is_recommended == 1;
 
   /** ✅ Step 2.1 CTA config */
-  const FLASH_REPORTS_URL = "https://raceautoanalytics.com/flash-reports";
+  const FLASH_REPORTS_URL = "https://raceautoanalytics.com/flash-reports/overview";
 
   /** ✅ Step 2.1 new CTA state (does not affect existing flow) */
   const [ctaLoading, setCtaLoading] = useState(false);

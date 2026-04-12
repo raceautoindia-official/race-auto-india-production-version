@@ -2,6 +2,7 @@ import React from "react";
 import PricingCarousel from "./PriceCarosel";
 import Image from "next/image";
 import RefreshOnVerified from "@/app/Verifies";
+import "./pricingShowcase.css";
 
 const SubscriptionPage = () => {
   return (
@@ -10,29 +11,21 @@ const SubscriptionPage = () => {
 
       <div className="container">
         <PricingCarousel />
-        <div className="row">
-          <div className="col-12">
-            <h2 className="text-center my-3 text-primary">
-              We’re reaching subscribers worldwide!
-            </h2>
-            <div className="d-flex justify-content-center">
-              <div
-                style={{
-                  position: "relative",
-                  width: "60%",
-                  aspectRatio: "16/9",
-                }}
-              >
-                <Image
-                  src="/images/subscribers map.gif"
-                  alt="subscriber map"
-                  fill
-                  unoptimized
-                />
-              </div>
-            </div>
+
+        <section className="subscription-map-section">
+          <h2 className="subscription-map-section__title">Trusted by subscribers across regions</h2>
+          <p className="subscription-map-section__subtitle">
+            Our subscriber base continues to grow worldwide with access across individual and business memberships.
+          </p>
+          <div className="subscription-map-section__media">
+            <Image
+              src="/images/subscribers map.gif"
+              alt="Subscriber coverage map"
+              fill
+              unoptimized
+            />
           </div>
-        </div>
+        </section>
       </div>
     </>
   );

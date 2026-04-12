@@ -1,20 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
-import { Card, ListGroup } from "react-bootstrap";
-import {
-  FaUser,
-  FaQuestionCircle,
-  FaCog,
-} from "react-icons/fa";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaCog, FaQuestionCircle, FaUser } from "react-icons/fa";
 import { HiBellAlert } from "react-icons/hi2";
+import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import styles from "./profile.module.css";
+
+type DecodedToken = {
+  username?: string;
+  email?: string;
+};
 
 function ProfileCard() {
+  const pathname = usePathname();
   const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [emailInitial, setEmailInitial] = useState<string>("U");
+  const [initial, setInitial] = useState<string>("U");
+  const [username, setUsername] = useState<string>("Your Account");
+  const [email, setEmail] = useState<string>("Manage your profile settings");
 
   useEffect(() => {
     const pic = Cookies.get("profilePic");
@@ -26,74 +31,62 @@ function ProfileCard() {
 
     if (token) {
       try {
-        const decoded: any = jwtDecode(token);
-        const initial = decoded?.username?.charAt(0)?.toUpperCase();
-        if (initial) setEmailInitial(initial);
+        const decoded = jwtDecode<DecodedToken>(token);
+        const nextName = decoded?.username?.trim() || "Your Account";
+        const nextEmail = decoded?.email?.trim() || "Manage your profile settings";
+        setUsername(nextName);
+        setEmail(nextEmail);
+        const nextInitial = nextName.charAt(0).toUpperCase();
+        if (nextInitial) setInitial(nextInitial);
       } catch (err) {
         console.error("JWT decode error:", err);
       }
     }
   }, []);
 
+  const links = useMemo(
+    () => [
+      { href: "/profile", label: "My Profile", icon: FaUser },
+      { href: "/profile/support", label: "Help & Support", icon: FaQuestionCircle },
+      { href: "/profile/subscription", label: "Subscription", icon: HiBellAlert },
+      { href: "/user/settings", label: "Account Settings", icon: FaCog },
+    ],
+    []
+  );
+
   return (
-    <Card style={{ borderRadius: "1rem" }} className="text-center shadow mb-3">
-      <Card.Body>
-        <div style={{ position: "relative", display: "inline-block" }}>
+    <div className={styles.sidebarCard}>
+      <div className={styles.sidebarTop}>
+        <div className={styles.avatarFrame}>
           {profilePic ? (
-            <img
-              src={profilePic}
-              alt="profile"
-              style={{
-                width: 140,
-                height: 140,
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
-            />
+            <img src={profilePic} alt="profile" className={styles.avatarImage} />
           ) : (
-            <div
-              style={{
-                width: 140,
-                height: 140,
-                borderRadius: "50%",
-                backgroundColor: "#ccc",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "64px",
-                fontWeight: 600,
-                color: "#fff",
-              }}
-            >
-              {emailInitial}
-            </div>
+            <div className={styles.avatarFallback}>{initial}</div>
           )}
         </div>
-      </Card.Body>
+        <h2 className={styles.sidebarTitle}>{username}</h2>
+        <p className={styles.sidebarText}>{email}</p>
+      </div>
 
-      <ListGroup variant="flush" className="text-start">
-        <Link href="/profile">
-          <ListGroup.Item action>
-            <FaUser className="me-2 my-3" /> My Profile
-          </ListGroup.Item>
-        </Link>
-        <Link href="/profile/support">
-          <ListGroup.Item action>
-            <FaQuestionCircle className="me-2 my-3" /> Help & Support
-          </ListGroup.Item>
-        </Link>
-        <Link href="/profile/subscription">
-          <ListGroup.Item action>
-            <HiBellAlert className="me-2 my-3" /> Subscribe
-          </ListGroup.Item>
-        </Link>
-        <Link href="/user/settings">
-          <ListGroup.Item action>
-            <FaCog className="me-2 my-3" /> Account Setting
-          </ListGroup.Item>
-        </Link>
-      </ListGroup>
-    </Card>
+      <nav className={styles.sidebarNav}>
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = href === "/profile"
+            ? pathname === "/profile"
+            : pathname?.startsWith(href);
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.navLink} ${isActive ? styles.navLinkActive : ""}`}
+            >
+              <Icon className={styles.navIcon} />
+              <span className={styles.navLabel}>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 

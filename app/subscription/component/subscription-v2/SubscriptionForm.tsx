@@ -110,7 +110,7 @@ const SubscriptionForm = ({ plan }: { plan: string }) => {
       {/* 2) BUY BUTTON */}
       <div className="text-center">
         <Button variant="dark" onClick={handleBuyClick}>
-          {isActivePlan ? "Upgarde Now" : "Buy Now"}
+          {isActivePlan ? "Upgrade Now" : "Buy Now"}
         </Button>
       </div>
 

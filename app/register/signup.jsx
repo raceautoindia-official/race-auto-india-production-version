@@ -89,7 +89,7 @@ const SignupForm = ({ onSuccess }) => {
           Stay here
         </Button>
         <Button
-          onClick={() => router.push("https://raceautoanalytics.com/flash-reports")}
+          onClick={() => router.push("https://raceautoanalytics.com/flash-reports/overview")}
           style={{
             border: "1.5px solid #000",
             background: "#fbeec1",

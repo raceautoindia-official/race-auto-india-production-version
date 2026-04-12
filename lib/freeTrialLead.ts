@@ -76,11 +76,12 @@ export async function hasLeadAlreadySubmitted(params: {
  * We check BOTH:
  * 1) users.subscription > 0
  * 2) active row in subscriptions
+ * 3) active business membership under a valid owner (new — backward compatible)
  */
 export async function hasActivePaidSubscription(userId: number) {
   // Check users.subscription flag
   const [userRows]: any = await db.query(
-    `SELECT id, subscription FROM users WHERE id = ? LIMIT 1`,
+    `SELECT id, subscription, email FROM users WHERE id = ? LIMIT 1`,
     [userId]
   );
 
@@ -106,10 +107,39 @@ export async function hasActivePaidSubscription(userId: number) {
     [userId]
   );
 
-  return {
-    exists: Array.isArray(subRows) && subRows.length > 0,
-    userFound: true,
-  };
+  if (Array.isArray(subRows) && subRows.length > 0) {
+    return { exists: true, userFound: true };
+  }
+
+  // Check business membership: is this user a member under a valid owner?
+  if (user.email) {
+    try {
+      const [memberRows]: any = await db.query(
+        `SELECT bm.owner_user_id
+         FROM business_members bm
+         WHERE LOWER(bm.member_email) = ? AND bm.status = 'active'
+         LIMIT 1`,
+        [String(user.email).toLowerCase().trim()]
+      );
+
+      if (Array.isArray(memberRows) && memberRows.length > 0) {
+        const ownerUserId = memberRows[0].owner_user_id;
+        const [ownerSub]: any = await db.query(
+          `SELECT id FROM subscriptions
+           WHERE user_id = ? AND LOWER(status) = 'active' AND end_date >= NOW()
+           LIMIT 1`,
+          [ownerUserId]
+        );
+        if (Array.isArray(ownerSub) && ownerSub.length > 0) {
+          return { exists: true, userFound: true };
+        }
+      }
+    } catch {
+      // business_members table may not exist yet; gracefully ignore
+    }
+  }
+
+  return { exists: false, userFound: true };
 }
 
 /**

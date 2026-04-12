@@ -1,21 +1,79 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
-import { Row, Col, Card, Form } from "react-bootstrap";
-import { FaFacebook, FaInstagram, FaLinkedin, FaPen } from "react-icons/fa";
+
+import { Card, Col, Form, Row } from "react-bootstrap";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaLinkedin,
+  FaPen,
+  FaRegAddressCard,
+} from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { FaXTwitter } from "react-icons/fa6";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { formatDate } from "@/components/Time";
 import {
   getActivePlanName,
   getPlanLabel,
   getPlanTextClass,
+  isBusinessPlan,
+  getPlanUITitle,
+  normalizePlanName,
 } from "@/lib/subscriptionPlan";
+import styles from "./profile.module.css";
+
+type DecodedToken = { email?: string; role?: string };
+
+type SocialItemProps = {
+  title: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+function normalizeUrl(url: string) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
+function SocialItem({ title, value, icon: Icon }: SocialItemProps) {
+  const trimmed = value?.trim();
+  const href = normalizeUrl(trimmed);
+
+  return (
+    <div className={styles.socialItem}>
+      <Icon className={styles.socialIcon} />
+      <div className={styles.socialContent}>
+        <span className={styles.socialTitle}>{title}</span>
+        {trimmed ? (
+          <a href={href} target="_blank" rel="noreferrer" className={styles.socialLink}>
+            {trimmed}
+          </a>
+        ) : (
+          <span className={styles.socialMuted}>Not added yet</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  const hasValue = Boolean(value?.trim());
+
+  return (
+    <div className={styles.infoItem}>
+      <span className={styles.infoLabel}>{label}</span>
+      <div className={`${styles.infoValue} ${!hasValue ? styles.infoValueMuted : ""}`}>
+        {hasValue ? value : "Not added yet"}
+      </div>
+    </div>
+  );
+}
 
 function ProfileDashboard({ token }: { token: string }) {
-  const [data, setData] = useState([]);
   const [email, setEmail] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [aboutme, setAboutme] = useState<string>("");
@@ -26,13 +84,16 @@ function ProfileDashboard({ token }: { token: string }) {
   const [subscription, setSubscription] = useState<any[]>([]);
   const [subscriptionPack, setSubscriptionPack] = useState<any[]>([]);
   const [plan, setPlan] = useState<any[]>([]);
+  const [membershipData, setMembershipData] = useState<any | null>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [seatLimit, setSeatLimit] = useState(0);
+  const [memberEmailInput, setMemberEmailInput] = useState("");
+  const [memberActionMsg, setMemberActionMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const decoded: any = token ? jwtDecode(token) : { email: "", role: "user" };
+  const decoded: DecodedToken = token ? jwtDecode<DecodedToken>(token) : { email: "", role: "user" };
 
   const subscriptionApi = async () => {
-    const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription`
-    );
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription`);
     setSubscription(res.data);
   };
 
@@ -48,16 +109,61 @@ function ProfileDashboard({ token }: { token: string }) {
     }
   };
 
+  const effectiveApi = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/effective/${decoded.email}`
+      );
+      setMembershipData(res.data?.membership ?? null);
+    } catch {
+      setMembershipData(null);
+    }
+  };
+
+  const fetchMembers = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/business-members?ownerEmail=${encodeURIComponent(decoded.email || "")}`,
+        { withCredentials: true }
+      );
+      setMembers(res.data?.members ?? []);
+      setSeatLimit(res.data?.seatLimit ?? 0);
+    } catch {
+      setMembers([]);
+    }
+  };
+
+  const handleAddMember = async () => {
+    setMemberActionMsg(null);
+    const memberEmail = memberEmailInput.trim();
+    if (!memberEmail) return;
+
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/business-members`,
+        { memberEmail },
+        { withCredentials: true }
+      );
+      setMemberEmailInput("");
+      setMemberActionMsg({ text: "Member added successfully.", ok: true });
+      fetchMembers();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? "Failed to add member.";
+      setMemberActionMsg({ text: msg, ok: false });
+    }
+  };
+
   const effectivePlan = getActivePlanName(subscriptionPack);
-  const isActive = effectivePlan !== "none";
+  const isOwnActive = effectivePlan !== "none";
   const isExpired = subscriptionPack[0]?.status === "expired";
+  const isMember = membershipData !== null;
+  const membershipPlan = isMember ? normalizePlanName(membershipData.plan_name) : "none";
+  const resolvedPlanForDetails = isOwnActive ? effectivePlan : membershipPlan;
+  const isBusinessOwner = isOwnActive && isBusinessPlan(effectivePlan);
 
   const userInfo = async () => {
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile/${decoded.email}`
-      );
-      setData(res.data);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile/${decoded.email}`);
       setEmail(res.data[0]?.email || "");
       setName(res.data[0]?.username || "");
       setAboutme(res.data[0]?.about_me || "");
@@ -77,200 +183,351 @@ function ProfileDashboard({ token }: { token: string }) {
   useEffect(() => {
     subscriptionApi();
     packApi();
+    effectiveApi();
   }, []);
 
   useEffect(() => {
     if (subscription.length !== 0) {
-      if (effectivePlan === "none") {
+      if (resolvedPlanForDetails === "none") {
         setPlan([]);
         return;
       }
-
-      const filteredPlan = subscription.filter(
-        (item: any) => item[effectivePlan] === 1
-      );
+      const filteredPlan = subscription.filter((item: any) => item[resolvedPlanForDetails] === 1);
       setPlan(filteredPlan);
     }
-  }, [effectivePlan, subscription]);
+  }, [resolvedPlanForDetails, subscription]);
+
+  useEffect(() => {
+    if (isBusinessOwner) {
+      fetchMembers();
+    }
+  }, [isBusinessOwner]);
+
+  const usedSeats = members.length;
+  const remainingSeats = Math.max(0, seatLimit - usedSeats);
+
+  const planDetailItems = useMemo(
+    () => plan.filter((item: any) => item.plan !== "usd").map((item: any) => item.plan),
+    [plan]
+  );
+
+  const accessTypeLabel = isOwnActive
+    ? "Direct Membership"
+    : isMember
+      ? "Shared Membership"
+      : isExpired
+        ? "Expired Membership"
+        : "Free Account";
+
+  const planTitle = isOwnActive
+    ? getPlanLabel(effectivePlan)
+    : isMember
+      ? getPlanUITitle(membershipPlan)
+      : isExpired
+        ? "Expired"
+        : "No Active Plan";
+
+  const statusChipClass = isOwnActive || isMember
+    ? styles.activeBadge
+    : isExpired
+      ? styles.mutedBadge
+      : styles.infoBadge;
+
+  const accessDateLabel = isOwnActive
+    ? formatDate(subscriptionPack[0]?.end_date)
+    : membershipData?.end_date
+      ? formatDate(membershipData.end_date)
+      : "—";
 
   return (
-    <Row className="">
-      <Col md={6} className="mb-2 mb-lg-0">
-        <Card className="p-3 shadow-sm rounded-3">
-          <Card.Body>
-            <Card.Title className="text-center">Subscription</Card.Title>
-
-            <Card.Text>
-              {isActive ? (
-                <>
-                  You are currently on the{" "}
-                  <span className={getPlanTextClass(effectivePlan)}>
-                    {getPlanLabel(effectivePlan)}
-                  </span>{" "}
-                  plan now.
-                </>
-              ) : isExpired ? (
-                "Your plan has expired."
-              ) : (
-                "You do not have an active paid plan right now."
-              )}
-            </Card.Text>
-
-            {isActive && (
-              <>
-                <Card.Title className="text-center mt-3">Validity</Card.Title>
-                <Card.Text>
-                  Start Date: {formatDate(subscriptionPack[0]?.start_date)}
-                </Card.Text>
-                <Card.Text>
-                  End Date: {formatDate(subscriptionPack[0]?.end_date)}
-                </Card.Text>
-              </>
-            )}
-
-            <Link href="/subscription">
-              <div className="d-flex justify-content-center">
-                <button className="btn btn-dark text-center">
-                  Upgrade Now
-                </button>
-              </div>
-            </Link>
-          </Card.Body>
-        </Card>
-      </Col>
-
-      <Col md={6} className="mb-3 mb-lg-0">
-        <Card className="p-3 shadow-sm rounded-3">
-          <Card.Body>
-            <Card.Title className="text-center mt-3">Plan Details</Card.Title>
-            {plan.length > 0 ? (
-              plan
-                .filter((item: any) => item.plan !== "usd")
-                .map((item: any, i) => (
-                  <li key={i} className="py-1">
-                    {item.plan}
-                  </li>
-                ))
-            ) : (
-              <p className="text-muted mb-0">No active plan details available.</p>
-            )}
-          </Card.Body>
-        </Card>
-      </Col>
-
-      <Col md={6} className="mb-3 mb-lg-0">
-        <Card className="p-3 shadow-sm rounded-3">
-          <Card.Body>
-            <Card.Title className="text-center">Profile</Card.Title>
-            <Form>
-              <div className="d-flex align-items-center my-3">
-                <Form.Control
-                  type="text"
-                  placeholder="Name"
-                  disabled
-                  value={name}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-
-              <div className="d-flex align-items-center my-3">
-                <Form.Control
-                  type="text"
-                  placeholder="Email"
-                  disabled
-                  value={email}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-
-              <div className="d-flex align-items-center my-3">
-                <Form.Control
-                  type="text"
-                  placeholder="About Me"
-                  disabled
-                  value={aboutme}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-            </Form>
-          </Card.Body>
-        </Card>
-      </Col>
-
-      <Col md={6} className="mt-3">
-        <Card className="p-3 shadow-sm rounded-3">
-          <Card.Body className="">
-            <Card.Title className="text-center">Social Media</Card.Title>
-            <div className="d-flex flex-column align-items-center">
-              <div className="d-flex align-items-center my-2">
-                <FaFacebook size={24} className="me-2" />
-                <Form.Control
-                  type="text"
-                  placeholder="Facebook URL"
-                  disabled
-                  value={facebook}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-
-              <div className="d-flex align-items-center my-2">
-                <FaInstagram size={24} className="me-2" />
-                <Form.Control
-                  type="text"
-                  placeholder="instagram URL"
-                  value={instagram}
-                  disabled
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-
-              <div className="d-flex align-items-center my-2">
-                <FaXTwitter size={24} className="me-2" />
-                <Form.Control
-                  type="text"
-                  placeholder="Twitter URL"
-                  disabled
-                  value={twitter}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
-              </div>
-
-              <div className="d-flex align-items-center my-2">
-                <FaLinkedin size={24} className="me-2" />
-                <Form.Control
-                  type="text"
-                  placeholder="Linkedin URL"
-                  disabled
-                  value={linkedin}
-                  className="me-2"
-                />
-                <Link href="/user/settings">
-                  <FaPen className="text-muted" style={{ cursor: "pointer" }} />
-                </Link>
+    <div className={styles.mainStack}>
+      <Card className={`${styles.surfaceCard} ${styles.heroCard}`}>
+        <Card.Body className="p-0">
+          <div className={styles.heroTop}>
+            <div>
+              <h2 className={styles.heroTitle}>Welcome back{name ? `, ${name}` : ""}</h2>
+              <p className={styles.heroSubtitle}>
+                Keep your profile polished, review your current access, and manage your plan details from a cleaner and more responsive workspace.
+              </p>
+              <div className={styles.badgeRow}>
+                <span className={styles.infoBadge}>{accessTypeLabel}</span>
+                <span className={statusChipClass}>
+                  {isOwnActive || isMember ? "Active Access" : isExpired ? "Plan Expired" : "Free Tier"}
+                </span>
               </div>
             </div>
+            <Link href="/user/settings" className={styles.primaryButton}>
+              <FaPen />
+              Edit Profile
+            </Link>
+          </div>
+
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Current Access</span>
+              <div className={`${styles.statValue} ${isOwnActive || isMember ? getPlanTextClass(isOwnActive ? effectivePlan : membershipPlan) : ""}`}>
+                {planTitle}
+              </div>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Account Email</span>
+              <div className={styles.statValue}>{email || decoded.email || "Not available"}</div>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Access Until</span>
+              <div className={styles.statValue}>{accessDateLabel}</div>
+            </div>
+          </div>
+        </Card.Body>
+      </Card>
+
+      <Row className="g-4">
+        <Col xl={6}>
+          <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
+            <Card.Body className="p-0">
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h3 className={styles.sectionTitle}>Subscription Overview</h3>
+                  <p className={styles.sectionDescription}>
+                    Your current ownership or shared access status is shown here without changing any existing subscription logic.
+                  </p>
+                </div>
+                <Link href="/subscription" className={styles.secondaryButton}>
+                  {isOwnActive ? "Upgrade Plan" : "Buy a Plan"}
+                </Link>
+              </div>
+
+              <div className={styles.infoList}>
+                {isOwnActive && (
+                  <>
+                    <InfoRow label="Current Plan" value={getPlanLabel(effectivePlan)} />
+                    <InfoRow label="Start Date" value={formatDate(subscriptionPack[0]?.start_date)} />
+                    <InfoRow label="End Date" value={formatDate(subscriptionPack[0]?.end_date)} />
+                  </>
+                )}
+
+                {!isOwnActive && isExpired && (
+                  <InfoRow label="Status" value="Your plan has expired." />
+                )}
+
+                {!isOwnActive && !isExpired && !isMember && (
+                  <InfoRow label="Status" value="You do not have an active paid plan right now." />
+                )}
+
+                {!isOwnActive && isMember && (
+                  <InfoRow label="Current Access" value={`Shared membership via ${getPlanUITitle(membershipPlan)}`} />
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xl={6}>
+          <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
+            <Card.Body className="p-0">
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h3 className={styles.sectionTitle}>Plan Details</h3>
+                  <p className={styles.sectionDescription}>
+                    Included access and plan-level features based on your direct plan or inherited membership.
+                  </p>
+                </div>
+              </div>
+
+              {planDetailItems.length > 0 ? (
+                <ul className={styles.featureList}>
+                  {planDetailItems.map((item, index) => (
+                    <li key={`${item}-${index}`} className={styles.featureItem}>
+                      <span className={styles.featureBullet} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className={`${styles.infoItem} ${styles.featureEmpty}`}>
+                  No active plan details available.
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {isMember && (
+        <Card className={`${styles.surfaceCard} ${styles.noticeCard}`}>
+          <Card.Body className="p-0">
+            <div className={styles.badgeRow}>
+              <span className={styles.infoBadge}>Shared Membership</span>
+              <span className={styles.activeBadge}>Active</span>
+            </div>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h3 className={styles.sectionTitle}>Business Shared Access</h3>
+                <p className={styles.sectionDescription}>
+                  You are currently using shared membership access provided by a business account. Your available features follow the owner's active subscription.
+                </p>
+              </div>
+              <Link href="/subscription" className={styles.ghostButton}>
+                Buy Your Own Plan
+              </Link>
+            </div>
+
+            <div className={styles.tableGrid}>
+              <div className={styles.tableLabel}>Plan</div>
+              <div className={`${styles.tableValue} ${getPlanTextClass(membershipPlan)}`}>{getPlanUITitle(membershipPlan)}</div>
+
+              {membershipData.owner_email && (
+                <>
+                  <div className={styles.tableLabel}>Provided by</div>
+                  <div className={styles.tableValue}>{membershipData.owner_email}</div>
+                </>
+              )}
+
+              {membershipData.start_date && (
+                <>
+                  <div className={styles.tableLabel}>Access from</div>
+                  <div className={styles.tableValue}>{formatDate(membershipData.start_date)}</div>
+                </>
+              )}
+              {membershipData.end_date && (
+                <>
+                  <div className={styles.tableLabel}>Access until</div>
+                  <div className={styles.tableValue}>{formatDate(membershipData.end_date)}</div>
+                </>
+              )}
+            </div>
+
+            <p className={styles.noticeText} style={{ marginTop: 20 }}>
+              You can still purchase your own subscription at any time. When that happens, your personal plan becomes your primary access plan.
+            </p>
           </Card.Body>
         </Card>
-      </Col>
-    </Row>
+      )}
+
+      {isBusinessOwner && (
+        <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
+          <Card.Body className="p-0">
+            <div className={styles.sectionHeader}>
+              <div>
+                <h3 className={styles.sectionTitle}>Team Access</h3>
+                <p className={styles.sectionDescription}>
+                  Add members to your <strong>{getPlanUITitle(effectivePlan)}</strong> plan. Assigned seats remain consumed for the active subscription term. This UI keeps add-only access and does not change existing backend behavior.
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.membersHeader}>
+              <div className={styles.memberStat}>
+                <span className={styles.statLabel}>Total Seats</span>
+                <div className={styles.statValue}>{seatLimit}</div>
+              </div>
+              <div className={styles.memberStat}>
+                <span className={styles.statLabel}>Used Seats</span>
+                <div className={styles.statValue}>{usedSeats}</div>
+              </div>
+              <div className={styles.memberStat}>
+                <span className={styles.statLabel}>Remaining</span>
+                <div className={styles.statValue}>{remainingSeats}</div>
+              </div>
+            </div>
+
+            <div className={styles.memberForm}>
+              <div className={`${styles.memberInput} flex-grow-1`}>
+                <Form.Control
+                  type="email"
+                  placeholder="member@example.com"
+                  value={memberEmailInput}
+                  onChange={(e) => setMemberEmailInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddMember()}
+                />
+              </div>
+              <button
+                className={styles.primaryButton}
+                onClick={handleAddMember}
+                disabled={usedSeats >= seatLimit}
+                type="button"
+              >
+                Add Member
+              </button>
+            </div>
+
+            {memberActionMsg && (
+              <p className={memberActionMsg.ok ? styles.messageOk : styles.messageError}>
+                {memberActionMsg.text}
+              </p>
+            )}
+
+            {members.length === 0 ? (
+              <div className={styles.infoItem}>
+                <span className={styles.infoValueMuted}>No members added yet.</span>
+              </div>
+            ) : (
+              <div className={styles.memberList}>
+                {members.map((m: any) => (
+                  <div key={m.id} className={styles.memberListItem}>
+                    <span className={styles.memberEmail}>{m.member_email}</span>
+                    <span className={styles.successBadge}>Assigned</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      )}
+
+      <Row className="g-4">
+        <Col xl={6}>
+          <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
+            <Card.Body className="p-0">
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h3 className={styles.sectionTitle}>Profile Details</h3>
+                  <p className={styles.sectionDescription}>
+                    A cleaner read-only view of your primary account information.
+                  </p>
+                </div>
+                <Link href="/user/settings" className={styles.ghostButton}>
+                  <FaRegAddressCard />
+                  Update Details
+                </Link>
+              </div>
+
+              <div className={styles.infoList}>
+                <InfoRow label="Full Name" value={name} />
+                <InfoRow label="Email Address" value={email || decoded.email || ""} />
+                <InfoRow label="About Me" value={aboutme} />
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xl={6}>
+          <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
+            <Card.Body className="p-0">
+              <div className={styles.sectionHeader}>
+                <div>
+                  <h3 className={styles.sectionTitle}>Social Media</h3>
+                  <p className={styles.sectionDescription}>
+                    Review the public links connected to your account profile.
+                  </p>
+                </div>
+                <Link href="/user/settings" className={styles.ghostButton}>
+                  <FaPen />
+                  Edit Links
+                </Link>
+              </div>
+
+              <div className={styles.socialList}>
+                <SocialItem title="Facebook" value={facebook} icon={FaFacebook} />
+                <SocialItem title="Instagram" value={instagram} icon={FaInstagram} />
+                <SocialItem title="X / Twitter" value={twitter} icon={FaXTwitter} />
+                <SocialItem title="LinkedIn" value={linkedin} icon={FaLinkedin} />
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 }
 

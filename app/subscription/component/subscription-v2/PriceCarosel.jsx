@@ -1,10 +1,15 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import PricingCard from "./SubscriptionCard";
-import { BiDiamond, BiShield } from "react-icons/bi";
-import { PiStarFill } from "react-icons/pi";
-import { FaMedal } from "react-icons/fa";
+import "./pricingShowcase.css";
+
+const PLAN_UI_TITLE = {
+  bronze: "Individual Basic",
+  silver: "Individual Pro",
+  gold: "Business",
+  platinum: "Business Pro",
+};
 
 export default function PricingCarousel() {
   const [planData, setPlanData] = useState([]);
@@ -23,7 +28,8 @@ export default function PricingCarousel() {
   const features = planData.filter((r) => !pricingKeys.includes(String(r.plan).toLowerCase()));
   const monthly = planData.find((r) => String(r.plan).toLowerCase() === "monthly price") || {};
   const annual = planData.find((r) => String(r.plan).toLowerCase() === "annual price") || {};
-  const multiplied = planData.find((r) => String(r.plan).toLowerCase() === "multiplied_price") || {};
+  const multiplied =
+    planData.find((r) => String(r.plan).toLowerCase() === "multiplied_price") || {};
   const usdValueArray = planData.filter((item) => String(item.plan).toLowerCase() === "usd");
   const usdValue = usdValueArray[0]?.platinum || 1;
 
@@ -31,25 +37,20 @@ export default function PricingCarousel() {
     const basePrice = priceSource[tier] ?? 0;
 
     const convertedPrice =
-      currency === "USD"
-        ? Math.round((basePrice / usdValue) * 100) / 100
-        : basePrice;
-
-    const isBusinessCategory = tier === "gold" || tier === "platinum";
-    const isCategoryDisabled =
-      categoryView === "individual" ? isBusinessCategory : !isBusinessCategory;
+      currency === "USD" ? Math.round((basePrice / usdValue) * 100) / 100 : basePrice;
 
     return {
       key: tier,
-      title: tier.charAt(0).toUpperCase() + tier.slice(1),
+      planKey: tier,
+      title: PLAN_UI_TITLE[tier] ?? tier,
       subtitle:
         tier === "bronze"
-          ? "For Individual Professionals"
+          ? "Built for individual professionals who need premium news access and a clean entry plan."
           : tier === "silver"
-          ? "For Growing Businesses"
+          ? "Designed for advanced individual users who need more tools and broader content access."
           : tier === "gold"
-          ? "For Expanding Enterprises"
-          : "For Large Corporations",
+          ? "For growing teams that need shared business access for up to 5 users."
+          : "For enterprise-ready teams that need broader business access for up to 10 users.",
       price: convertedPrice,
       multipliedPrice: multiplied[tier] ?? 1,
       features: features.map((f) => ({
@@ -57,144 +58,115 @@ export default function PricingCarousel() {
         available: f[tier],
         description: f.description || "",
       })),
-      isCategoryDisabled,
-      categoryView,
+      currency,
+      isYear,
+      isPopular: tier === "platinum",
     };
   };
 
-  const plans = [
-    {
-      ...makePlan("bronze"),
-      color: "#f6ede3",
-      icon: <FaMedal />,
-      currency,
-      isYear,
-    },
-    {
-      ...makePlan("silver"),
-      color: "#f4f4f4",
-      icon: <BiShield />,
-      currency,
-      isYear,
-    },
-    {
-      ...makePlan("gold"),
-      color: "#e7e7e7",
-      icon: <PiStarFill />,
-      currency,
-      isYear,
-    },
-    {
-      ...makePlan("platinum"),
-      color: "#d9d9d9",
-      icon: <BiDiamond />,
-      isPopular: true,
-      currency,
-      isYear,
-    },
-  ];
+  const visiblePlanKeys =
+    categoryView === "individual" ? ["bronze", "silver"] : ["gold", "platinum"];
 
-  const categoryTitle =
-    categoryView === "individual"
-      ? "Individual Category"
-      : "Business / Enterprise Category";
+  const plans = visiblePlanKeys.map((tier) => makePlan(tier));
 
-  const categoryDescription =
-    categoryView === "individual"
-      ? "Bronze and Silver plans are active. Gold and Platinum stay visible in disabled view."
-      : "Gold and Platinum plans are active. Bronze and Silver stay visible in disabled view.";
+  const categoryMeta = useMemo(
+    () => ({
+      individual: {
+        eyebrow: "Individual Membership",
+
+        description:
+          "Choose between the two individual plans with a cleaner comparison focused on solo users and professionals.",
+      },
+      business: {
+        eyebrow: "Business Membership",
+ 
+        description:
+          "Compare the two business plans built for team access, shared memberships, and enterprise-ready usage.",
+      },
+    }),
+    []
+  );
+
+  const currentMeta = categoryMeta[categoryView];
 
   return (
-    <div style={{ padding: "0 16px 32px" }}>
-      <div
-        className="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-3 pt-3"
-        style={{ textAlign: "center" }}
-      >
-        <h5 className="mb-0 me-3">Grow better with the right plan</h5>
+    <section className="subscription-shell">
+      <div className="subscription-shell__hero">
+        <span className="subscription-shell__eyebrow">Subscription Plans</span>
+        <h1 className="subscription-shell__title">Corporate pricing, simplified for every user type.</h1>
+        <p className="subscription-shell__subtitle">
+          Switch between individual and business views to see only the relevant plan cards. The pricing logic,
+          backend flow, and checkout behavior remain unchanged.
+        </p>
 
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <div className="btn-group rounded-pill shadow-sm me-2">
+        <div className="subscription-control-panel">
+          <div className="subscription-toggle-group" role="group" aria-label="Currency toggle">
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${currency === "INR" ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${currency === "INR" ? "is-active" : ""}`}
               onClick={() => setCurrency("INR")}
             >
               INR
             </button>
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${currency === "USD" ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${currency === "USD" ? "is-active" : ""}`}
               onClick={() => setCurrency("USD")}
             >
               USD
             </button>
           </div>
 
-          <div className="btn-group rounded-pill shadow-sm me-2">
+          <div className="subscription-toggle-group" role="group" aria-label="Billing cycle toggle">
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${!isYear ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${!isYear ? "is-active" : ""}`}
               onClick={() => setIsYear(false)}
             >
-              Month
+              Monthly
             </button>
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${isYear ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${isYear ? "is-active" : ""}`}
               onClick={() => setIsYear(true)}
             >
               Yearly
             </button>
           </div>
 
-          <div className="btn-group rounded-pill shadow-sm">
+          <div
+            className="subscription-toggle-group subscription-toggle-group--category"
+            role="group"
+            aria-label="Membership category toggle"
+          >
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${categoryView === "individual" ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${categoryView === "individual" ? "is-active" : ""}`}
               onClick={() => setCategoryView("individual")}
             >
               Individuals
             </button>
             <button
               type="button"
-              style={{ borderRadius: "50px", padding: "0.5rem 1.2rem" }}
-              className={`btn ${categoryView === "business" ? "btn-dark active" : "btn-light"}`}
+              className={`subscription-toggle-group__button ${categoryView === "business" ? "is-active" : ""}`}
               onClick={() => setCategoryView("business")}
             >
               Business
             </button>
           </div>
         </div>
+
+        <div className="subscription-plan-summary">
+
+          <p className="subscription-plan-summary__text">{currentMeta.description}</p>
+        </div>
       </div>
 
-      {/* <div style={{ textAlign: "center", marginTop: "20px", marginBottom: "10px" }}>
-        <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>{categoryTitle}</h6>
-        <p style={{ color: "#6b7280", fontSize: "0.92rem", marginBottom: 0 }}>
-          {categoryDescription}
-        </p>
-      </div> */}
-
-      <div
-        style={{
-          maxWidth: "1480px",
-          margin: "24px auto 0",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "24px",
-          alignItems: "stretch",
-        }}
-      >
-        {plans.map((p, i) => (
-          <div key={p.key || i} style={{ minWidth: 0 }}>
-            <PricingCard {...p} />
-          </div>
+      <div className="subscription-plan-grid">
+        {plans.map((plan) => (
+          <PricingCard key={plan.key} {...plan} categoryView={categoryView} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
