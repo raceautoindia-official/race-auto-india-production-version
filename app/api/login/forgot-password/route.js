@@ -6,42 +6,72 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const { email } = await req.json();
-    const [user] = await db.execute(`SELECT * FROM users WHERE email = ?`, [email]);
 
+    if (!email || !email.includes("@")) {
+      return NextResponse.json(
+        { message: "If an account exists for this email, a reset link has been sent." }
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const [user] = await db.execute(
+      `SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1`,
+      [normalizedEmail]
+    );
+
+    // Always return the same neutral message — do not reveal whether email exists
     if (user.length === 0) {
-      return NextResponse.json({ err: "No user with that email address" }, { status: 404 });
+      return NextResponse.json(
+        { message: "If an account exists for this email, a reset link has been sent." }
+      );
     }
 
     const resetToken = jwt.sign(
-      { email: email },
+      { email: normalizedEmail },
       process.env.JWT_KEY,
-      { expiresIn: "1h" } // token expires in 1 hour
+      { expiresIn: "1h" }
     );
 
-    const link = `${process.env.NEXT_PUBLIC_BACKEND_URL}verifytoken/${resetToken}`;
+    // Store token in DB so it can be invalidated after single use
+    await db.execute(
+      `UPDATE users SET password_reset_token = ? WHERE LOWER(email) = ?`,
+      [resetToken, normalizedEmail]
+    );
+
+    // Link points to the dedicated confirm page (not a missing /verifytoken route)
+    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+    const link = `${baseUrl}/reset-password/confirm?token=${encodeURIComponent(resetToken)}`;
 
     await new Promise((resolve, reject) => {
       mailTransporter.sendMail(
         {
           ...mailDetails,
-          to: email,
-          subject: "Reset Password Link",
-          text: `Please click this link to reset your password: ${link}`,
+          to: email.trim(),
+          subject: "Reset Your Password — Race Auto India",
+          text: `You requested a password reset.\n\nClick the link below to set a new password. This link expires in 1 hour.\n\n${link}\n\nIf you did not request this, please ignore this email.`,
+          html: `
+            <p>You requested a password reset for your Race Auto India account.</p>
+            <p><a href="${link}" style="background:#111;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">Reset Password</a></p>
+            <p>This link expires in <strong>1 hour</strong>.</p>
+            <p>If you did not request this, please ignore this email — your password will not change.</p>
+          `,
         },
         (error, info) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(info);
-          }
+          if (error) reject(error);
+          else resolve(info);
         }
       );
     });
 
-    return NextResponse.json({ message: "Reset password link sent to your email." });
-
+    return NextResponse.json(
+      { message: "If an account exists for this email, a reset link has been sent." }
+    );
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ err: "Internal server error" }, { status: 500 });
+    console.error("forgot-password error:", err);
+    // Still return neutral message on error to avoid leaking info
+    return NextResponse.json(
+      { message: "If an account exists for this email, a reset link has been sent." }
+    );
   }
 }
