@@ -445,8 +445,9 @@ const MobileNavNew = () => {
               <span className={styles.caption}>Forecast</span>
             </div>
           </Link>
-
-          <div className={styles.navItem} onClick={handleToggle}>
+onClick=handleToggle
+<Link href="/subscription">
+          <div className={styles.navItem} >   
             <FiCreditCard
               color={iconColor}
               size={iconSize}
@@ -454,6 +455,7 @@ const MobileNavNew = () => {
             />
             <span className={styles.caption}>Subscription</span>
           </div>
+          </Link>
 
           <Link href="/page/event">
             <div className={styles.navItem}>
