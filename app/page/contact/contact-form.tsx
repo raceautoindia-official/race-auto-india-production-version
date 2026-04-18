@@ -2,49 +2,60 @@
 import React, { useRef } from "react";
 import { Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
-import emailjs from "@emailjs/browser";
 import "./contact.css";
 
 const Contact_form = () => {
   const form: any = useRef();
 
-  const sendEmail = (e: any) => {
+  const sendEmail = async (e: any) => {
     e.preventDefault();
 
-    emailjs
-      .sendForm("service_hfodjji", "template_oar700m", form.current, {
-        publicKey: "UZcCs9JIB60j9FXQJ",
-      })
-      .then(
-        () => {
-          toast.success("Message Submitted!", {
-            position: "top-right",
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          });
+    try {
+      const formData = new FormData(form.current);
+      const payload = {
+        name: formData.get("user_name"),
+        email: formData.get("user_email"),
+        message: formData.get("message"),
+      };
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        (error) => {
-          console.log("FAILED...", error.text);
-          toast.warn(
-            "An error occurred while submitting the form. Please try again later.",
-            {
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            }
-          );
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to submit contact form");
+      }
+
+      toast.success("Message Submitted!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    } catch (error) {
+      console.log("FAILED...", error);
+      toast.warn(
+        "An error occurred while submitting the form. Please try again later.",
+        {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
         }
       );
+    }
   };
 
   return (
