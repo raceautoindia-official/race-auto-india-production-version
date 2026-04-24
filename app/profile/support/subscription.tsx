@@ -41,16 +41,19 @@ function SubscriptionProfile({ token }: { token: any }) {
     if (subscription.length !== 0) {
       const planName =
         subscriptionPack.length === 0 || subscriptionPack[0]?.status === "expired"
-          ? "bronze"
+          ? "none"
           : subscriptionPack[0]?.plan_name;
-      const filteredPlan = subscription.filter((item: any) => item[planName] === 1);
+      const filteredPlan =
+        planName === "none"
+          ? []
+          : subscription.filter((item: any) => item[planName] === 1);
       setPlan(filteredPlan);
     }
   }, [subscriptionPack, subscription]);
 
   const currentPlan =
     subscriptionPack.length === 0 || subscriptionPack[0]?.status === "expired"
-      ? "bronze"
+      ? "none"
       : subscriptionPack[0]?.plan_name;
   const isActive = subscriptionPack[0]?.status === "Active";
   const isExpired = subscriptionPack[0]?.status === "expired";
@@ -99,7 +102,7 @@ function SubscriptionProfile({ token }: { token: any }) {
 
           {isExpired ? (
             <div className={styles.infoItem}>
-              <span className={styles.infoValue}>Your plan has expired. Bronze plan details are shown as the fallback.</span>
+              <span className={styles.infoValue}>Your paid plan has expired. Your account is currently on the Free plan.</span>
             </div>
           ) : (
             <div className={styles.infoItem}>

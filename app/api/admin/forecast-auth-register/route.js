@@ -1,6 +1,9 @@
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { welcomeEmailTemplate } from "@/lib/emailTemplates";
+import { sendSesEmail } from "@/lib/sesMailer";
+import { markEmailEventIfNew } from "@/lib/emailNotificationLog";
 
 // CORS Preflight
 export async function OPTIONS() {
@@ -58,13 +61,38 @@ export async function POST(req) {
     const hash = await bcrypt.hash(password, 10);
 
     // Insert new user
-    const [result] = await db.execute(
-      `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
-      [username, email, hash]
+    const [insertResult] = await db.execute(
+      `INSERT INTO users (username, email, password, role, subscription) VALUES (?, ?, ?, ?, ?)`,
+      [username, email, hash, "user", 0]
     );
+    const userId = insertResult?.insertId;
+
+    try {
+      if (userId) {
+        const shouldSendWelcome = await markEmailEventIfNew({
+          eventType: "welcome_email",
+          eventKey: `welcome-user:${userId}`,
+          userId,
+          email,
+        });
+        if (shouldSendWelcome) {
+          const template = welcomeEmailTemplate(username);
+          void sendSesEmail({
+            to: email,
+            subject: template.subject,
+            html: template.html,
+            text: template.text,
+          }).catch((sendErr) => {
+            console.error("forecast register welcome email async error:", sendErr);
+          });
+        }
+      }
+    } catch (mailErr) {
+      console.error("forecast register welcome email error:", mailErr);
+    }
 
     return new Response(
-      JSON.stringify({ message: "User registered successfully" }),
+      JSON.stringify({ message: "User registered successfully", role: "user" }),
       {
         status: 200,
         headers: {

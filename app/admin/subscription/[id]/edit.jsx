@@ -109,10 +109,10 @@ const EditPlan = () => {
               <tr>
                 <th>#</th>
                 <th>Plan</th>
-                <th>Platinum</th>
-                <th>Gold</th>
-                <th>Silver</th>
-                <th>Bronze</th>
+                <th>Business Pro</th>
+                <th>Business</th>
+                <th>Individual Pro</th>
+                <th>Individual Basic</th>
                 <th>Action</th>
               </tr>
             </thead>

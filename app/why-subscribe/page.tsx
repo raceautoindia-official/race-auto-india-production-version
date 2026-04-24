@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Why Subscribe / Trial Request | Race Auto India",
+  title: "Why Subscribe | Race Auto India",
   description:
-    "Why Race Auto India asks for your details when requesting access to premium automotive market intelligence.",
+    "Why Race Auto India asks for your details when requesting premium automotive market intelligence access.",
 };
 
 export default function WhySubscribePage() {
@@ -55,9 +55,9 @@ export default function WhySubscribePage() {
             maxWidth: 760,
           }}
         >
-          We ask for basic details when you request a free trial so our team can review the request,
-          understand your market segment interest, and provide relevant access to the right automotive
-          intelligence content. This helps us maintain quality access and support genuine business users.
+          We ask for basic details when you request premium access so our team can review the request,
+          understand your market segment interest, and provide relevant automotive intelligence content.
+          This helps us maintain quality access and support genuine business users.
         </p>
 
         <section
@@ -73,10 +73,10 @@ export default function WhySubscribePage() {
             What we use your details for
           </h2>
           <ul style={{ margin: 0, paddingLeft: 18, color: "#d1d5db", lineHeight: 1.7 }}>
-            <li>To review your free trial request</li>
+            <li>To review your premium access request</li>
             <li>To identify the segment/data category you are interested in</li>
             <li>To contact you if your request is approved</li>
-            <li>To prevent duplicate or misuse of trial access</li>
+            <li>To prevent duplicate or misuse of access</li>
           </ul>
         </section>
 
@@ -93,8 +93,8 @@ export default function WhySubscribePage() {
             What we do not do
           </h2>
           <ul style={{ margin: 0, paddingLeft: 18, color: "#d1d5db", lineHeight: 1.7 }}>
-            <li>We do not charge you when you submit a trial request</li>
-            <li>We do not require payment to review your request</li>
+            <li>We do not charge you just for submitting an access request</li>
+            <li>We do not require payment only for request review</li>
             <li>We do not ask for unnecessary personal information in this form</li>
           </ul>
         </section>

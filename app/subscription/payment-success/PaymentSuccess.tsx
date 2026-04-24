@@ -4,14 +4,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "react-bootstrap";
 import confetti from "canvas-confetti";
 import Image from "next/image";
+import { getPlanUITitle } from "@/lib/subscriptionPlan";
 
 const SuccessPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
   const planDuration = searchParams.get("duration");
+  const planLabel = plan ? getPlanUITitle(plan) : "Selected Plan";
 
   const getPlanValidity = (planType: any) => {
+    if (planType !== "annual" && planType !== "monthly") return "N/A";
     const currentDate = new Date();
     if (planType === "annual") {
       currentDate.setDate(currentDate.getDate() + 365);
@@ -105,7 +108,7 @@ const SuccessPage = () => {
         <h2 className="fw-bold text-dark">
           Your payment for{" "}
           <span className={getPlanTextClass(plan)}>
-            {plan?.toUpperCase()}
+            {planLabel}
           </span>{" "}
           plan is successful!
         </h2>
@@ -113,7 +116,7 @@ const SuccessPage = () => {
         <p className="text-muted">
           Your{" "}
           <span className={getPlanTextClass(plan)}>
-            {plan}
+            {planLabel}
           </span>{" "}
           is now active and valid until <strong>{planExpiryDate}</strong>.
           <br />

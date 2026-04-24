@@ -1,284 +1,277 @@
 "use client";
 /* eslint-disable react-hooks/exhaustive-deps */
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { Form } from "react-bootstrap";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { formatDate } from "@/components/Time";
+import { getPlanUITitle, normalizePlanName } from "@/lib/subscriptionPlan";
+
+type DurationType = "monthly" | "annual" | "custom_days";
+
+const PLAN_OPTIONS = [
+  { value: "free", label: "Free" },
+  { value: "bronze", label: getPlanUITitle("bronze") },
+  { value: "silver", label: getPlanUITitle("silver") },
+  { value: "gold", label: getPlanUITitle("gold") },
+  { value: "platinum", label: getPlanUITitle("platinum") },
+];
+
+const USER_PLAN_CODE_TO_NAME: Record<number, string> = {
+  0: "free",
+  1: "bronze",
+  2: "silver",
+  3: "gold",
+  4: "platinum",
+};
+
+function toDateInput(value: any): string {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return new Date().toISOString().slice(0, 10);
+  return dt.toISOString().slice(0, 10);
+}
+
+function durationDays(type: DurationType, customDays: number) {
+  if (type === "annual") return 365;
+  if (type === "custom_days") return Math.max(1, Math.floor(customDays || 1));
+  return 30;
+}
+
+function addDays(startDate: string, days: number): string {
+  const dt = new Date(startDate);
+  if (Number.isNaN(dt.getTime())) return "-";
+  dt.setDate(dt.getDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
 
 const EditUser = () => {
   const { id } = useParams();
 
-  const [plan, setPlan] = useState<any>(0);
   const [userName, setUserName] = useState("");
-  const [currentPlan, setCurrentplan] = useState<any>(0);
-  const [planDuration, setPlanDuration] = useState("monthly");
-  const [subscriptionData, setSubscriptionData] = useState([]);
-  const [currentStartDate, setCurrentStartDate] = useState<any>("");
-  const [currentEndDate, setCurrentEndDate] = useState<any>("");
-  const [existingPlan, setExistingPlan] = useState(0);
+  const [currentPlanCode, setCurrentPlanCode] = useState(0);
+  const [currentSubscription, setCurrentSubscription] = useState<any | null>(null);
   const [message, setMessage] = useState("");
-  const [existingPlanDate, setExistingPlanDate] = useState<any>("");
-  const [existingPlanEndDate, setExistingPlanEndDate] = useState<any>("");
 
-  const formatDateCurrrent = (date: any) => {
-    const validDate = date instanceof Date ? date : new Date(date);
-    const day = String(validDate.getDate()).padStart(2, "0");
-    const month = String(validDate.getMonth() + 1).padStart(2, "0");
-    const year = validDate.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
+  const [selectedPlan, setSelectedPlan] = useState("free");
+  const [planUpdateMode, setPlanUpdateMode] = useState<"existing" | "new">("existing");
+  const [durationType, setDurationType] = useState<DurationType>("monthly");
+  const [customDays, setCustomDays] = useState<number>(7);
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 10));
 
-  const calculateDates = (duration: string) => {
-    const startDate = new Date();
-    const endDate = new Date(startDate);
+  const planDays = useMemo(() => durationDays(durationType, customDays), [durationType, customDays]);
+  const previewEndDate = useMemo(() => addDays(startDate, planDays), [startDate, planDays]);
 
-    if (duration === "monthly") {
-      endDate.setMonth(startDate.getMonth() + 1);
-    } else if (duration === "annual") {
-      endDate.setFullYear(startDate.getFullYear() + 1);
-    }
-
-    setCurrentStartDate(formatDateCurrrent(startDate));
-    setCurrentEndDate(formatDateCurrrent(endDate));
-  };
-
-  const roleData = async () => {
-    try {
-      const subscriptionRes = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/user_id/${id}`
-      );
-
-      setSubscriptionData(subscriptionRes.data);
-
-      if (subscriptionRes.data.length > 0) {
-        const date1 = new Date(subscriptionRes.data[0].start_date);
-        const date2 = new Date(subscriptionRes.data[0].end_date);
-
-        setExistingPlanDate(subscriptionRes.data[0].start_date);
-        setExistingPlanEndDate(subscriptionRes.data[0].end_date);
-
-        // Calculate the difference in milliseconds
-        const differenceInMs = date2.getTime() - date1.getTime();
-
-        // Convert milliseconds to days
-        const differenceInDays = differenceInMs / (1000 * 60 * 60 * 24);
-
-        // Determine if it's Monthly (<31 days) or Annual (≥365 days)
-        if (differenceInDays < 31) {
-          setPlanDuration("monthly");
-        } else if (differenceInDays >= 365) {
-          setPlanDuration("annual");
-        }
-
-        setExistingPlan(0); // Set existing plan flag if data exists
-      } else {
-        setExistingPlan(1);
-      }
-    } catch (err: any) {
-      if (err.response && err.response.status === 404) {
-        setExistingPlan(1); // Set existing plan flag to 0 on 404 error
-        setMessage(
-          "This user is new to subscription, so there is no existing plan"
-        );
-      }
-      console.log(err);
-    }
-  };
-
-  const formDataApi = async () => {
+  const loadUserData = async () => {
     try {
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/user/${id}`
       );
       const data = res.data[0];
-      setCurrentplan(data.subscription);
-      setPlan(data.subscription);
-      setUserName(data.username);
+      setCurrentPlanCode(Number(data?.subscription || 0));
+      setUserName(data?.username || "");
+      setSelectedPlan(USER_PLAN_CODE_TO_NAME[Number(data?.subscription || 0)] || "free");
     } catch (err) {
       console.log(err);
     }
   };
 
-  const EditApi = async () => {
+  const loadSubscriptionData = async () => {
     try {
-      const planValue =
-        plan == 1
-          ? "silver"
-          : plan == 2
-          ? "gold"
-          : plan == 3
-          ? "platinum"
-          : "bronze";
-
-      const formData = {
-        plan: planValue,
-        duration: planDuration,
-        isExisting: existingPlan == 1 ? true : false,
-      };
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/user_id/${id}`,
-        formData
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/user_id/${id}`
       );
 
-      toast.success("User value updated!", {
+      const sub = Array.isArray(res.data) && res.data.length > 0 ? res.data[0] : null;
+      setCurrentSubscription(sub);
+
+      if (sub) {
+        setSelectedPlan(String(sub.plan_name || "free").toLowerCase());
+        setStartDate(toDateInput(sub.start_date));
+        const start = new Date(sub.start_date);
+        const end = new Date(sub.end_date);
+        const diffDays = Math.max(
+          1,
+          Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+        );
+        if (diffDays === 30) {
+          setDurationType("monthly");
+        } else if (diffDays === 365) {
+          setDurationType("annual");
+        } else {
+          setDurationType("custom_days");
+          setCustomDays(diffDays);
+        }
+      } else {
+        setPlanUpdateMode("new");
+        setMessage("This user has no prior subscription record.");
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setPlanUpdateMode("new");
+        setMessage("This user has no prior subscription record.");
+      }
+      console.log(err);
+    }
+  };
+
+  const submitUpdate = async () => {
+    try {
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/user_id/${id}`, {
+        plan: selectedPlan,
+        isExisting: planUpdateMode === "new",
+        durationType,
+        customDays,
+        startDate,
+      });
+
+      toast.success("Subscriber plan updated successfully.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      loadSubscriptionData();
+      loadUserData();
+    } catch (err) {
+      console.log(err);
+      toast.warn("An error occurred while updating this subscriber.", {
         position: "top-right",
         autoClose: 4000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
       });
-    } catch (err) {
-      console.log(err);
-      toast.warn(
-        "An error occurred while submitting the form. Please try again later.",
-        {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        }
-      );
     }
   };
 
   useEffect(() => {
-    formDataApi();
-    roleData();
+    loadUserData();
+    loadSubscriptionData();
   }, []);
 
-  useEffect(() => {
-    if (existingPlan === 1) calculateDates(planDuration);
-  }, [planDuration, existingPlan]);
+  const currentUserPlanName = USER_PLAN_CODE_TO_NAME[currentPlanCode] || "free";
+  const currentUserPlanLabel = currentUserPlanName === "free"
+    ? "Free"
+    : getPlanUITitle(normalizePlanName(currentUserPlanName));
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    EditApi();
+    submitUpdate();
   };
 
   return (
     <div className="row justify-content-center">
-      <div className="col-lg-6">
+      <div className="col-lg-7">
         <Link href="/admin/subscription/subscribers">
           <button className="btn btn-secondary mt-3">Back</button>
         </Link>
+
         <div className="shadow-sm p-3 mb-5 mt-5 bg-white rounded border-0">
           <form onSubmit={handleSubmit}>
             <p>User Name: {userName}</p>
             <p>
-              Current Plan:{" "}
-              <span
-                className={
-                  currentPlan == 1
-                    ? "text-secondary" // Silver
-                    : currentPlan == 2
-                    ? "text-warning" // Gold
-                    : currentPlan == 3
-                    ? "text-info" // Platinum
-                    : "text-muted" // Bronze
-                }
-              >
-                {currentPlan == 1
-                  ? "Silver"
-                  : currentPlan == 2
-                  ? "Gold"
-                  : currentPlan == 3
-                  ? "Platinum"
-                  : "Bronze"}
-              </span>
+              Current Plan: <span className="text-primary">{currentUserPlanLabel}</span>
             </p>
+            {currentSubscription && (
+              <p>
+                Current Window:{" "}
+                <span className="text-primary">
+                  {toDateInput(currentSubscription.start_date)} to {toDateInput(currentSubscription.end_date)}
+                </span>
+              </p>
+            )}
 
             <Form.Group controlId="Plan" className="mb-3">
-              <Form.Label className="">Plan</Form.Label>
+              <Form.Label>Plan</Form.Label>
               <Form.Control
                 as="select"
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
+                value={selectedPlan}
+                onChange={(e) => setSelectedPlan(e.target.value)}
               >
-                {[
-                  { id: 0, name: "Bronze", value: 0 },
-                  { id: 1, name: "Silver", value: 1 },
-                  { id: 2, name: "Gold", value: 2 },
-                  { id: 3, name: "Platinum", value: 3 },
-                ].map((item) => (
-                  <option key={item.id} value={item.value}>
-                    {item.name}
+                {PLAN_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
                 ))}
               </Form.Control>
             </Form.Group>
 
             <Form.Group controlId="PlanUpdate" className="mb-3">
-              <Form.Label className="">Plan Updation</Form.Label>
+              <Form.Label>Plan Update Mode</Form.Label>
               <div>
                 <Form.Check
                   type="radio"
                   id="existing"
-                  label="Existing Plan"
-                  value={0}
-                  checked={existingPlan === 0}
-                  onChange={(e) => setExistingPlan(parseInt(e.target.value))}
+                  label="Update Existing Window"
+                  checked={planUpdateMode === "existing"}
+                  onChange={() => setPlanUpdateMode("existing")}
                 />
                 <Form.Check
                   type="radio"
-                  id="New"
-                  label="New Plan"
-                  value={1}
-                  checked={existingPlan === 1}
-                  onChange={(e) => setExistingPlan(parseInt(e.target.value))}
+                  id="new"
+                  label="Create New Window"
+                  checked={planUpdateMode === "new"}
+                  onChange={() => setPlanUpdateMode("new")}
                 />
               </div>
             </Form.Group>
-            {existingPlan === 1 && (
-              <Form.Group controlId="PlanDuration" className="mb-3">
-                <Form.Label className="text-primary">
-                  New Plan Duration
-                </Form.Label>
-                <div>
-                  <Form.Check
-                    type="radio"
-                    id="monthly"
-                    label="Monthly"
-                    value="monthly"
-                    checked={planDuration === "monthly"}
-                    onChange={(e) => setPlanDuration(e.target.value)}
+
+            {selectedPlan !== "free" && (
+              <>
+                <Form.Group controlId="StartDate" className="mb-3">
+                  <Form.Label>Start Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
-                  <Form.Check
-                    type="radio"
-                    id="annual"
-                    label="Annual"
-                    value="annual"
-                    checked={planDuration === "annual"}
-                    onChange={(e) => setPlanDuration(e.target.value)}
-                  />
-                </div>
-              </Form.Group>
-            )}
-            {existingPlan == 0 && plan !== 0 && (
-              <p>
-                Current Plan Duration:{" "}
-                <span className="text-primary">
-                  {formatDateCurrrent(existingPlanDate)} to{" "}
-                  {formatDateCurrrent(existingPlanEndDate)}
-                </span>
-              </p>
+                </Form.Group>
+
+                <Form.Group controlId="DurationType" className="mb-3">
+                  <Form.Label>Duration Type</Form.Label>
+                  <div>
+                    <Form.Check
+                      type="radio"
+                      id="monthly"
+                      label="Monthly (30 days)"
+                      checked={durationType === "monthly"}
+                      onChange={() => setDurationType("monthly")}
+                    />
+                    <Form.Check
+                      type="radio"
+                      id="annual"
+                      label="Annual (365 days)"
+                      checked={durationType === "annual"}
+                      onChange={() => setDurationType("annual")}
+                    />
+                    <Form.Check
+                      type="radio"
+                      id="custom"
+                      label="Custom Days"
+                      checked={durationType === "custom_days"}
+                      onChange={() => setDurationType("custom_days")}
+                    />
+                  </div>
+                </Form.Group>
+
+                {durationType === "custom_days" && (
+                  <Form.Group controlId="CustomDays" className="mb-3">
+                    <Form.Label>Custom Duration (Days)</Form.Label>
+                    <Form.Control
+                      type="number"
+                      min={1}
+                      value={customDays}
+                      onChange={(e) => setCustomDays(Number(e.target.value || 1))}
+                    />
+                  </Form.Group>
+                )}
+
+                <p>
+                  End Date Preview: <span className="text-primary">{previewEndDate}</span>
+                </p>
+              </>
             )}
 
-            {existingPlan == 1 && (
-              <p className="">
-                Plan Duration:{" "}
-                <span className="text-primary">
-                  {currentStartDate} to {currentEndDate}
-                </span>
+            {selectedPlan === "free" && (
+              <p className="text-primary mb-3">
+                Saving as Free will remove paid access for this user.
               </p>
             )}
 

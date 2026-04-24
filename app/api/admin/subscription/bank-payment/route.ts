@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { INTERNAL_NOTIFICATION_RECIPIENTS_STRING } from "@/lib/internalNotificationRecipients";
 import { mailTransporter } from "@/utils/Mailer";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const mailContent: any = {
       from: email,
-      to: "raceautoindia@gmail.com",
+      to: INTERNAL_NOTIFICATION_RECIPIENTS_STRING,
       subject: subject,
       html: body,
     };

@@ -585,6 +585,41 @@
   font-size: 0.95rem;
 }
 
+.memberMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pendingCaption {
+  color: var(--profile-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.memberActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.resendButton {
+  border: 1px solid rgba(2, 17, 47, 0.16);
+  background: #ffffff;
+  color: var(--profile-navy);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.resendButton:hover {
+  background: #f8fafc;
+}
+
 .messageOk,
 .messageError {
   margin: 0;

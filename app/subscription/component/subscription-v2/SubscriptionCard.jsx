@@ -17,7 +17,7 @@ const PLAN_META = {
     accentSoft: "rgba(178, 139, 71, 0.12)",
     titleColor: "#8c651e",
     iconSrc: "/images/bronze.png",
-    iconAlt: "Bronze icon",
+    iconAlt: "Individual Basic icon",
   },
   silver: {
     segmentLabel: "Individual Plan",
@@ -26,7 +26,7 @@ const PLAN_META = {
     accentSoft: "rgba(100, 116, 139, 0.12)",
     titleColor: "#334155",
     iconSrc: "/images/silver.jpg",
-    iconAlt: "Silver icon",
+    iconAlt: "Individual Pro icon",
   },
   gold: {
     segmentLabel: "Business Plan",
@@ -35,7 +35,7 @@ const PLAN_META = {
     accentSoft: "rgba(195, 147, 45, 0.12)",
     titleColor: "#a26708",
     iconSrc: "/images/gold-star.png",
-    iconAlt: "Gold icon",
+    iconAlt: "Business icon",
   },
   platinum: {
     segmentLabel: "Business Plan",
@@ -44,7 +44,7 @@ const PLAN_META = {
     accentSoft: "rgba(15, 23, 42, 0.08)",
     titleColor: "#0f172a",
     iconSrc: "/images/platinum.png",
-    iconAlt: "Platinum icon",
+    iconAlt: "Business Pro icon",
   },
 };
 
@@ -112,6 +112,9 @@ export default function PricingCard({
 
   const isUserSubscribed =
     subcriptionData.length !== 0 &&
+    String(subcriptionData[0]?.status || "").toLowerCase() === "active" &&
+    subcriptionData[0]?.start_date &&
+    new Date(subcriptionData[0].start_date) <= new Date() &&
     subcriptionData[0]?.end_date &&
     new Date(subcriptionData[0].end_date) > new Date();
 
@@ -125,7 +128,7 @@ export default function PricingCard({
     if (!label) return "";
     let text = label;
     if (planKey === "silver") {
-      text = text.replace(/Everything in Silver Plan/gi, "Everything in Bronze Plan");
+      text = text.replace(/Everything in Silver Plan/gi, "Everything in Individual Basic Plan");
     }
     return text;
   };

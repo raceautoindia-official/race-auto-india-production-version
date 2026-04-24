@@ -20,28 +20,28 @@ const CARD_META = {
     accentSoft: 'rgba(178, 139, 71, 0.12)',
     titleColor: '#8c651e',
     iconSrc: '/images/bronze.png',
-    iconAlt: 'Bronze icon',
+    iconAlt: 'Individual Basic icon',
   },
   silver: {
     accent: '#64748b',
     accentSoft: 'rgba(100, 116, 139, 0.12)',
     titleColor: '#334155',
     iconSrc: '/images/silver.jpg',
-    iconAlt: 'Silver icon',
+    iconAlt: 'Individual Pro icon',
   },
   gold: {
     accent: '#c3932d',
     accentSoft: 'rgba(195, 147, 45, 0.12)',
     titleColor: '#a26708',
     iconSrc: '/images/gold-star.png',
-    iconAlt: 'Gold icon',
+    iconAlt: 'Business icon',
   },
   platinum: {
     accent: '#0f172a',
     accentSoft: 'rgba(15, 23, 42, 0.08)',
     titleColor: '#0f172a',
     iconSrc: '/images/platinum.png',
-    iconAlt: 'Platinum icon',
+    iconAlt: 'Business Pro icon',
   },
 };
 
@@ -78,6 +78,9 @@ export default function MobilePricingCard({
 
   const isUserSubscribed =
     subscriptionData.length !== 0 &&
+    String(subscriptionData[0]?.status || '').toLowerCase() === 'active' &&
+    subscriptionData[0]?.start_date &&
+    new Date(subscriptionData[0].start_date) <= new Date() &&
     subscriptionData[0]?.end_date &&
     new Date(subscriptionData[0].end_date) > new Date();
 
@@ -102,7 +105,7 @@ export default function MobilePricingCard({
     if (!label) return '';
     let text = label;
     if (planKey === 'silver') {
-      text = text.replace(/Everything in Silver Plan/gi, 'Everything in Bronze Plan');
+      text = text.replace(/Everything in Silver Plan/gi, 'Everything in Individual Basic Plan');
     }
     return text;
   };

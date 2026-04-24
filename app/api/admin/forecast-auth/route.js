@@ -49,7 +49,14 @@ export async function POST(req) {
     }
 
     return Response.json(
-      { message: "login success" },
+      {
+        message: "login success",
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role || "user",
+        },
+      },
       {
         status: 200,
         headers: {

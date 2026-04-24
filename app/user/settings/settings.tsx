@@ -1,11 +1,20 @@
 "use client";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import { Form, Container, Row, Col } from "react-bootstrap";
 import { jwtDecode } from "jwt-decode";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "react-toastify";
+
+type BillingHistoryEntry = {
+  id: string;
+  status: "Success" | "Failed";
+  planLabel: string;
+  amount: number | null;
+  paymentReference: string | null;
+  createdAt: string | null;
+};
 
 const AccountSettingsForm = ({ token }: { token: string }) => {
   const [username, setUsername] = useState("");
@@ -17,6 +26,8 @@ const AccountSettingsForm = ({ token }: { token: string }) => {
   const [linkedin, setLinkedin] = useState("");
   const [avatar, setavatar] = useState<any>([]);
   const [avatarPreview, setAvatarPreview] = useState<any>(null);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryEntry[]>([]);
+  const [billingExpanded, setBillingExpanded] = useState(false);
 
   const decoded: any = jwtDecode(token);
   const userInfo = async () => {
@@ -37,6 +48,18 @@ const AccountSettingsForm = ({ token }: { token: string }) => {
       );
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const fetchBillingHistory = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile/billing-history/${decoded.email}`
+      );
+      setBillingHistory(Array.isArray(res.data?.history) ? res.data.history : []);
+    } catch (err) {
+      console.log(err);
+      setBillingHistory([]);
     }
   };
 
@@ -102,7 +125,10 @@ const AccountSettingsForm = ({ token }: { token: string }) => {
 
   useEffect(() => {
     userInfo();
+    fetchBillingHistory();
   }, []);
+
+  const visibleBilling = billingExpanded ? billingHistory : billingHistory.slice(0, 5);
 
   return (
     <Container className="mt-4">
@@ -212,6 +238,60 @@ const AccountSettingsForm = ({ token }: { token: string }) => {
           </Col>
         </Row>
       </Form>
+
+      <div className="mt-5">
+        <h4 className="mb-3">Billing / Payment History</h4>
+        {billingHistory.length === 0 ? (
+          <div className="alert alert-light border">No billing history available yet.</div>
+        ) : (
+          <>
+            <div className="table-responsive">
+              <table className="table table-bordered align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th>Status</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Payment Ref</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleBilling.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>
+                        <span className={`badge ${entry.status === "Success" ? "bg-success" : "bg-danger"}`}>
+                          {entry.status}
+                        </span>
+                      </td>
+                      <td>{entry.planLabel}</td>
+                      <td>
+                        {typeof entry.amount === "number"
+                          ? `INR ${entry.amount.toLocaleString("en-IN")}`
+                          : "-"}
+                      </td>
+                      <td>{entry.paymentReference || "-"}</td>
+                      <td>
+                        {entry.createdAt ? new Date(entry.createdAt).toLocaleString("en-IN") : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {billingHistory.length > 5 && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setBillingExpanded((prev) => !prev)}
+              >
+                {billingExpanded ? "Show Less" : "Read More"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </Container>
   );
 };

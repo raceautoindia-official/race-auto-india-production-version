@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { FaMedal } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { getPlanUITitle } from "@/lib/subscriptionPlan";
 
 import "./planDetails.css";
 
@@ -19,6 +20,13 @@ interface PlanDetailsFormProps {
   ) => void;
   plan: string;
 }
+
+const PLAN_UI_LABEL: Record<string, string> = {
+  bronze: getPlanUITitle("bronze"),
+  silver: getPlanUITitle("silver"),
+  gold: getPlanUITitle("gold"),
+  platinum: getPlanUITitle("platinum"),
+};
 
 const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
   const router = useRouter();
@@ -147,13 +155,13 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
           <span className={`plan-badge ${planTier}`}>
             <FaMedal />
           </span>
-          <span className="ms-2 fw-bold">{planTier.toUpperCase()} PLAN</span>
+          <span className="ms-2 fw-bold">{PLAN_UI_LABEL[planTier] || planTier} PLAN</span>
         </div>
       </div>
 
       <div className="card-body">
         <p className="text-muted">
-          Unlock all exclusive <strong>{planTier}</strong> plan features after
+          Unlock all exclusive <strong>{PLAN_UI_LABEL[planTier] || planTier}</strong> plan features after
           purchasing.
         </p>
 
@@ -166,10 +174,10 @@ const PlanDetailsForm: React.FC<PlanDetailsFormProps> = ({ onNext, plan }) => {
                   value={planTier}
                   onChange={(e) => setPlanTier(e.target.value)}
                 >
-                  <option value="bronze">Bronze</option>
-                  <option value="silver">Silver</option>
-                  <option value="gold">Gold</option>
-                  <option value="platinum">Platinum</option>
+                  <option value="bronze">{PLAN_UI_LABEL.bronze}</option>
+                  <option value="silver">{PLAN_UI_LABEL.silver}</option>
+                  <option value="gold">{PLAN_UI_LABEL.gold}</option>
+                  <option value="platinum">{PLAN_UI_LABEL.platinum}</option>
                 </Form.Select>
               </Form.Group>
             </Col>

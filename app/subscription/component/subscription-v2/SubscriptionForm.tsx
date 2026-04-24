@@ -63,7 +63,12 @@ const SubscriptionForm = ({ plan }: { plan: string }) => {
   }, [email]);
 
   const isActivePlan =
-    subcriptionData.length !== 0 && new Date(subcriptionData[0].end_date) > new Date();
+    subcriptionData.length !== 0 &&
+    String(subcriptionData[0]?.status || "").toLowerCase() === "active" &&
+    subcriptionData[0]?.start_date &&
+    new Date(subcriptionData[0].start_date) <= new Date() &&
+    subcriptionData[0]?.end_date &&
+    new Date(subcriptionData[0].end_date) > new Date();
 
   // When "Buy Now" is clicked, either prompt login or open modal
   const handleBuyClick = () => {

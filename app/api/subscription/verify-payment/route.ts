@@ -1,9 +1,11 @@
 import db from "@/lib/db";
 import crypto from "crypto";
-import schedule from "node-schedule";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
 import { getPlanCodeFromName } from "@/lib/subscriptionPlan";
+import { subscriptionConfirmationEmailTemplate } from "@/lib/emailTemplates";
+import { sendSesEmail } from "@/lib/sesMailer";
+import { markEmailEventIfNew } from "@/lib/emailNotificationLog";
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, {
@@ -21,6 +23,7 @@ export async function POST(req: NextRequest) {
       email,
       plan,
       duration,
+      AMT,
     } = await req.json();
 
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
@@ -73,11 +76,10 @@ export async function POST(req: NextRequest) {
     );
 
     const durationDays = duration === "annual" ? 365 : 30;
-    const expireTime = new Date(
-      Date.now() + durationDays * 24 * 60 * 60 * 1000
-    );
-
     const subscription = getPlanCodeFromName(plan);
+    const purchaseDate = new Date();
+    const expiryDate = new Date(purchaseDate);
+    expiryDate.setDate(expiryDate.getDate() + durationDays);
 
     if (existingSubscription.length > 0) {
       await db.execute(
@@ -92,18 +94,8 @@ export async function POST(req: NextRequest) {
         subscription,
         user_id,
       ]);
-
-      schedule.scheduleJob(expireTime, async function () {
-        await db.execute(
-          `UPDATE subscriptions SET status = 'expired' WHERE id = ?`,
-          [existingSubscription[0].id]
-        );
-        await db.execute(`UPDATE users SET subscription = 0 WHERE id = ?`, [
-          user_id,
-        ]);
-      });
     } else {
-      const [results]: any = await db.execute(
+      await db.execute(
         `INSERT INTO subscriptions (user_id, payment_id, plan_name, start_date, end_date, status)
          VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL ? DAY), 'Active')`,
         [user_id, razorpay_payment_id, plan, durationDays]
@@ -113,18 +105,42 @@ export async function POST(req: NextRequest) {
         subscription,
         user_id,
       ]);
+    }
 
-      const subId = results.insertId;
-
-      schedule.scheduleJob(expireTime, async function () {
-        await db.execute(
-          `UPDATE subscriptions SET status = 'expired' WHERE id = ?`,
-          [subId]
-        );
-        await db.execute(`UPDATE users SET subscription = 0 WHERE id = ?`, [
-          user_id,
-        ]);
+    try {
+      const shouldSendConfirmation = await markEmailEventIfNew({
+        eventType: "subscription_confirmation",
+        eventKey: `subscription-confirmation:${razorpay_payment_id}`,
+        userId: user_id,
+        email,
+        metaJson: JSON.stringify({
+          plan,
+          duration,
+          paymentId: razorpay_payment_id,
+        }),
       });
+
+      if (shouldSendConfirmation) {
+        const template = subscriptionConfirmationEmailTemplate({
+          planName: plan,
+          paymentId: razorpay_payment_id,
+          amount: typeof AMT === "number" ? AMT : Number(AMT || 0) || undefined,
+          purchaseDate: purchaseDate.toISOString().slice(0, 10),
+          expiryDate: expiryDate.toISOString().slice(0, 10),
+        });
+
+        void sendSesEmail({
+          to: email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        }).catch((sendErr) => {
+          console.error("subscription confirmation email async error:", sendErr);
+        });
+      }
+    } catch (mailErr) {
+      // Keep payment verification successful even if email fails.
+      console.error("subscription confirmation email error:", mailErr);
     }
 
     return NextResponse.json(

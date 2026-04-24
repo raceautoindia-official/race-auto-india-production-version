@@ -8,6 +8,7 @@ import ReactPaginate from "react-paginate";
 import { GrFormNext, GrFormPrevious } from "react-icons/gr";
 import Image from "next/image";
 import Link from "next/link";
+import { getPlanNameFromCode, getPlanUITitle } from "@/lib/subscriptionPlan";
 
 export type User = {
   id: number;
@@ -244,17 +245,7 @@ const UserTable = () => {
                   </td>
                   <td>{user.email}</td>
                   <td>{user.role}</td>
-                  <td>
-  {user.subscription == 1
-    ? "Bronze"
-    : user.subscription == 2
-    ? "Silver"
-    : user.subscription == 3
-    ? "Gold"
-    : user.subscription == 4
-    ? "Platinum"
-    : "No Plan"}
-</td>
+                  <td>{Number(user.subscription) > 0 ? getPlanUITitle(getPlanNameFromCode(user.subscription)) : "Free"}</td>
                   {/* <td>{user.created_date}</td> */}
                   <td>
                     <Link href={`/admin/user/${user.id}`}>

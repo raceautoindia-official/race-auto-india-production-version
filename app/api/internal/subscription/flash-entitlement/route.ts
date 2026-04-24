@@ -2,6 +2,14 @@ import db from "@/lib/db";
 import { checkInternalApiKey } from "@/lib/internalAuth";
 import { NextRequest, NextResponse } from "next/server";
 
+function isEffectivelyActive(status: any, endDate: any): boolean {
+  const statusValue = String(status || "").toLowerCase().trim();
+  if (statusValue !== "active") return false;
+  if (!endDate) return false;
+  const expiryMs = new Date(endDate).getTime();
+  return Number.isFinite(expiryMs) && expiryMs >= Date.now();
+}
+
 /**
  * GET /api/internal/subscription/flash-entitlement?email=user@example.com
  *
@@ -53,30 +61,35 @@ export async function GET(req: NextRequest) {
 
     // ── 1. Look up user ──────────────────────────────────────────────────────
     const [userRows]: any = await db.execute(
-      `SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1`,
+      `SELECT id, role FROM users WHERE LOWER(email) = ? LIMIT 1`,
       [email]
     );
     const userId: number | null = userRows[0]?.id ?? null;
+    const role: string | null = userRows[0]?.role ? String(userRows[0].role) : null;
+    let pendingMembershipStatus: "pending" | null = null;
 
     // ── 2. Check direct (own) active subscription ────────────────────────────
     let directPlanName: string | null = null;
+    let directPlanEndDate: string | null = null;
 
     if (userId) {
       const [ownRows]: any = await db.execute(
         `SELECT plan_name FROM subscriptions
-         WHERE user_id = ? AND LOWER(status) = 'active' AND end_date >= NOW()
+         WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
          ORDER BY end_date DESC
          LIMIT 1`,
         [userId]
       );
       if (ownRows.length > 0) {
         directPlanName = String(ownRows[0].plan_name ?? "").toLowerCase();
+        directPlanEndDate = ownRows[0].end_date ? String(ownRows[0].end_date) : null;
       }
     }
 
     // ── 3. Check shared business membership ──────────────────────────────────
     let sharedPlanName: string | null = null;
     let parentEmail: string | null = null;
+    let sharedPlanEndDate: string | null = null;
 
     const [memberRow]: any = await db.execute(
       `SELECT bm.owner_user_id, bm.plan_name
@@ -94,7 +107,7 @@ export async function GET(req: NextRequest) {
         `SELECT s.end_date, u.email AS owner_email
          FROM subscriptions s
          JOIN users u ON u.id = s.user_id
-         WHERE s.user_id = ? AND LOWER(s.status) = 'active' AND s.end_date >= NOW()
+         WHERE s.user_id = ? AND LOWER(s.status) = 'active' AND s.start_date <= NOW() AND s.end_date >= NOW()
          ORDER BY s.end_date DESC
          LIMIT 1`,
         [ownerUserId]
@@ -103,6 +116,33 @@ export async function GET(req: NextRequest) {
       if (ownerSub.length > 0) {
         sharedPlanName = memberPlanName;
         parentEmail = ownerSub[0].owner_email ?? null;
+        sharedPlanEndDate = ownerSub[0].end_date ? String(ownerSub[0].end_date) : null;
+      }
+    }
+
+    if (!sharedPlanName) {
+      const [pendingRows]: any = await db.execute(
+        `SELECT owner_user_id
+         FROM business_member_invites
+         WHERE LOWER(member_email) = ? AND status = 'pending'
+         ORDER BY id DESC
+         LIMIT 1`,
+        [email]
+      ).catch(() => [[]]);
+
+      if (Array.isArray(pendingRows) && pendingRows.length > 0) {
+        const [ownerSub]: any = await db.execute(
+          `SELECT 1
+           FROM subscriptions
+           WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
+           ORDER BY end_date DESC
+           LIMIT 1`,
+          [pendingRows[0].owner_user_id]
+        );
+
+        if (ownerSub.length > 0) {
+          pendingMembershipStatus = "pending";
+        }
       }
     }
 
@@ -122,13 +162,21 @@ export async function GET(req: NextRequest) {
       accessType = "shared";
     }
 
-    const isSubscribed = hasDirectPlan || hasSharedPlan;
+    const directActive = hasDirectPlan
+      ? isEffectivelyActive("active", directPlanEndDate)
+      : false;
+    const sharedActive = hasSharedPlan
+      ? isEffectivelyActive("active", sharedPlanEndDate)
+      : false;
+
+    const isSubscribed = directActive || sharedActive;
     const effectiveStatus = isSubscribed ? "active" : "free";
     const flashReportCountryLimit =
       effectivePlan ? (FLASH_COUNTRY_LIMIT[effectivePlan] ?? 0) : 0;
 
     return NextResponse.json({
       email,
+      role,
       effectivePlan,
       accessType,
       isSubscribed,
@@ -137,6 +185,8 @@ export async function GET(req: NextRequest) {
       flashReportCountryLimit,
       hasDirectPlan,
       hasSharedPlan,
+      membership_status: hasSharedPlan ? "approved" : pendingMembershipStatus,
+      membership_approved: hasSharedPlan ? true : pendingMembershipStatus ? false : null,
     });
   } catch (err) {
     console.error("GET /api/internal/subscription/flash-entitlement error:", err);

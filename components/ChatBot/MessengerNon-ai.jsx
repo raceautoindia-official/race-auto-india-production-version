@@ -1,89 +1,401 @@
-'use client'
+'use client';
+
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
-
-import emailjs from "@emailjs/browser";
+import { Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import dynamic from 'next/dynamic';
+
+import AuthModal from '@/app/test/components/LoginFormTest';
+import RazorpayPaymentForm from '@/app/subscription/component/subscription-v2/razorpayV2Form';
+import { getPlanUITitle } from '@/lib/subscriptionPlan';
 
 const ChatBot = dynamic(
-  () => import("react-chatbotify").then((m) => m.default),
+  () => import('react-chatbotify').then((m) => m.default),
   { ssr: false }
 );
 
 const UA_REGEX =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 
+const PLAN_LABEL_TO_KEY = {
+  'Individual Basic': 'bronze',
+  'Individual Pro': 'silver',
+  Business: 'gold',
+  'Business Pro': 'platinum',
+};
+
+const PLAN_KEY_TO_LABEL = {
+  bronze: getPlanUITitle('bronze'),
+  silver: getPlanUITitle('silver'),
+  gold: getPlanUITitle('gold'),
+  platinum: getPlanUITitle('platinum'),
+};
+
+const CHATBOT_HISTORY_KEY = 'floating_chatbot';
+const CHATBOT_PURCHASE_INTENT_KEY = 'floating_chatbot_purchase_intent';
+const CHATBOT_RESUME_LOCK_KEY = 'floating_chatbot_purchase_resume_lock';
+
+const isValidEmail = (value) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim().toLowerCase());
+
+const formatSubscriptionDate = (dateValue) => {
+  if (!dateValue) return null;
+  const date = new Date(dateValue);
+  if (!Number.isFinite(date.getTime())) return null;
+
+  return date.toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+const buildActiveSubscriptionMessage = (subscription) => {
+  const planLabel = getPlanUITitle(subscription?.plan_name || 'none');
+  const expiryDate = formatSubscriptionDate(subscription?.end_date);
+  const accessPrefix = subscription?.is_member
+    ? 'You already have active shared access'
+    : 'You already have an active subscription';
+
+  if (expiryDate) {
+    return `${accessPrefix} to ${planLabel} until ${expiryDate}. You can manage your plan from your profile subscription page.`;
+  }
+
+  return `${accessPrefix} to ${planLabel}. You can manage your plan from your profile subscription page.`;
+};
 
 const FloatingChatBot = () => {
   const router = useRouter();
-  const [latestNews, setLatestNews] = useState([])
+
+  const [latestNews, setLatestNews] = useState([]);
+  const [subscriptionRows, setSubscriptionRows] = useState([]);
+
+  const [selectedPlan, setSelectedPlan] = useState('silver');
+  const [selectedBillingCycle, setSelectedBillingCycle] =
+    useState('annual');
+  const [selectedAmount, setSelectedAmount] = useState(0);
+
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [purchaseStatusMessage, setPurchaseStatusMessage] = useState('');
+
+  const [enquiryTopic, setEnquiryTopic] = useState('General enquiry');
 
   const isDesktop = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const ua = navigator?.userAgent ?? "";
+    if (typeof window === 'undefined') return false;
+    const ua = navigator?.userAgent ?? '';
     return !UA_REGEX.test(ua);
   }, []);
 
-  const latestNewsApi = async () => {
-    try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/latest-news`)
-
-      const data = res.data.map(item => {
-        return {
-          title: item.title, // Assuming 'title' exists in item
-          link: `${process.env.NEXT_PUBLIC_BACKEND_URL}${item.title_slug}`
-        };
-      });
-      setLatestNews(data.slice(0, 5))
-    } catch (err) {
-      console.log(err)
+  const latestNewsMessage = useMemo(() => {
+    if (!latestNews.length) {
+      return 'Latest updates are not available right now. Please check again shortly or visit the latest news page.';
     }
-  }
 
+    return latestNews
+      .map((news) => `${news.title} - [Read More](${news.link})`)
+      .join('\n');
+  }, [latestNews]);
+
+  const loadAuthUser = () => {
+    const token = Cookies.get('authToken');
+    if (!token) {
+      setUserEmail('');
+      return '';
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      const email = String(decoded?.email || '').trim();
+      setUserEmail(email);
+      return email;
+    } catch {
+      setUserEmail('');
+      return '';
+    }
+  };
+
+  const getPriceFromRows = (
+    rows,
+    plan,
+    cycle
+  ) => {
+    const key = cycle === 'monthly' ? 'monthly price' : 'annual price';
+    const row = rows.find((item) => String(item?.plan || '').toLowerCase() === key);
+    return Number(row?.[plan] ?? 0);
+  };
+
+  const setSelection = (plan, cycle) => {
+    const resolvedCycle = cycle || selectedBillingCycle;
+    setSelectedPlan(plan);
+    setSelectedBillingCycle(resolvedCycle);
+    setSelectedAmount(getPriceFromRows(subscriptionRows, plan, resolvedCycle));
+  };
+
+  const submitEnquiryEmail = async (email) => {
+    const payload = {
+      name: 'Chatbot Enquiry',
+      email,
+      message: `Chatbot enquiry type: ${enquiryTopic}`,
+    };
+
+    await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/contact`, payload);
+  };
+
+  const persistPurchaseIntent = (intent) => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(CHATBOT_PURCHASE_INTENT_KEY, JSON.stringify(intent));
+    sessionStorage.removeItem(CHATBOT_RESUME_LOCK_KEY);
+  };
+
+  const readPurchaseIntent = () => {
+    if (typeof window === 'undefined') return null;
+    const raw = sessionStorage.getItem(CHATBOT_PURCHASE_INTENT_KEY);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      sessionStorage.removeItem(CHATBOT_PURCHASE_INTENT_KEY);
+      return null;
+    }
+  };
+
+  const clearPurchaseIntent = () => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.removeItem(CHATBOT_PURCHASE_INTENT_KEY);
+    sessionStorage.removeItem(CHATBOT_RESUME_LOCK_KEY);
+  };
+
+  const appendBotHistoryMessage = (message) => {
+    if (typeof window === 'undefined' || !message) return;
+
+    try {
+      const raw = localStorage.getItem(CHATBOT_HISTORY_KEY);
+      const history = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(history)) return;
+
+      history.push({
+        id: `chatbot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        content: message,
+        sender: 'BOT',
+        type: 'string',
+        timestamp: new Date().toUTCString(),
+        tags: [],
+      });
+
+      localStorage.setItem(CHATBOT_HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      // If chat history storage is unavailable, skip the resume message quietly.
+    }
+  };
+
+  const fetchEffectiveSubscription = async (email) => {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/effective/${encodeURIComponent(email)}`
+    );
+
+    const ownSub = response?.data?.own || null;
+    const membershipSub = response?.data?.membership || null;
+
+    return ownSub || membershipSub || null;
+  };
+
+  const startCheckoutIfEligible = async ({
+    source = 'chatbot',
+    email = userEmail,
+    intent = null,
+  } = {}) => {
+    if (!email) {
+      return { blocked: true, needsAuth: true };
+    }
+
+    try {
+      const activeSubscription = await fetchEffectiveSubscription(email);
+
+      if (activeSubscription) {
+        const message = buildActiveSubscriptionMessage(activeSubscription);
+        setPurchaseStatusMessage(message);
+        clearPurchaseIntent();
+
+        if (source === 'resume') {
+          appendBotHistoryMessage(message);
+        }
+
+        return {
+          blocked: true,
+          isSubscribed: true,
+          message,
+        };
+      }
+
+      setShowCheckoutModal(true);
+      clearPurchaseIntent();
+
+      if (source === 'resume') {
+        appendBotHistoryMessage(
+          `You're signed in now. Opening secure checkout for ${PLAN_KEY_TO_LABEL[intent?.plan || selectedPlan]} (${intent?.billingCycle || selectedBillingCycle}).`
+        );
+      }
+
+      return { blocked: false };
+    } catch {
+      const message =
+        'We could not verify your subscription status right now. Please try again in a moment.';
+      setPurchaseStatusMessage(message);
+
+      if (source === 'resume') {
+        appendBotHistoryMessage(message);
+      }
+
+      return {
+        blocked: true,
+        message,
+      };
+    }
+  };
+
+  const handleAuthModalClose = () => {
+    setShowAuthModal(false);
+    loadAuthUser();
+
+    if (!Cookies.get('authToken')) {
+      clearPurchaseIntent();
+    }
+  };
+
+  useEffect(() => {
+    loadAuthUser();
+
+    axios
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/latest-news`)
+      .then((res) => {
+        const data = (res.data || []).map((item) => ({
+          title: item.title,
+          link: `${process.env.NEXT_PUBLIC_BACKEND_URL}${item.title_slug}`,
+        }));
+        setLatestNews(data.slice(0, 5));
+      })
+      .catch(() => setLatestNews([]));
+
+    axios
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription`)
+      .then((res) => {
+        const rows = Array.isArray(res.data) ? res.data : [];
+        setSubscriptionRows(rows);
+        setSelectedAmount(getPriceFromRows(rows, 'silver', 'annual'));
+      })
+      .catch(() => {
+        setSubscriptionRows([]);
+        setSelectedAmount(0);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!subscriptionRows.length) return;
+    setSelectedAmount(getPriceFromRows(subscriptionRows, selectedPlan, selectedBillingCycle));
+  }, [subscriptionRows, selectedPlan, selectedBillingCycle]);
+
+  // Restore a pending chatbot purchase intent once after the auth-triggered reload.
+  // The effect is intentionally mount-only so we don't re-run resume logic later.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const token = Cookies.get('authToken');
+    const intent = readPurchaseIntent();
+    const resumeLocked = sessionStorage.getItem(CHATBOT_RESUME_LOCK_KEY) === '1';
+
+    if (!token || !intent || resumeLocked) return;
+
+    sessionStorage.setItem(CHATBOT_RESUME_LOCK_KEY, '1');
+    setSelectedPlan(intent.plan || 'silver');
+    setSelectedBillingCycle(intent.billingCycle || 'annual');
+    setSelectedAmount(Number(intent.amount || 0));
+    setShowAuthModal(false);
+    const email = loadAuthUser();
+
+    void (async () => {
+      if (!email) {
+        sessionStorage.removeItem(CHATBOT_RESUME_LOCK_KEY);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/effective/${encodeURIComponent(email)}`
+        );
+        const activeSubscription = response?.data?.own || response?.data?.membership || null;
+
+        if (activeSubscription) {
+          const message = buildActiveSubscriptionMessage(activeSubscription);
+          setPurchaseStatusMessage(message);
+          clearPurchaseIntent();
+          appendBotHistoryMessage(message);
+          return;
+        }
+
+        setShowCheckoutModal(true);
+        clearPurchaseIntent();
+        appendBotHistoryMessage(
+          `You're signed in now. Opening secure checkout for ${PLAN_KEY_TO_LABEL[intent.plan || 'silver']} (${intent.billingCycle || 'annual'}).`
+        );
+      } catch {
+        const message =
+          'We could not verify your subscription status right now. Please try again in a moment.';
+        setPurchaseStatusMessage(message);
+        appendBotHistoryMessage(message);
+      }
+    })().finally(() => {
+      sessionStorage.removeItem(CHATBOT_RESUME_LOCK_KEY);
+    });
+  }, []);
 
   const helpOptions = [
-    "Subscription Inquiries",
-    "Explore Our Services",
-    "Payment Assistance",
-    "Latest News Coverage",
-    "Advertising",
-    "Other Queries"
+    'Subscription Inquiries',
+    'Explore Our Services',
+    'Payment Assistance',
+    'Latest News Coverage',
+    'Advertising',
+    'Other Queries',
   ];
 
   const subscriptionOptions = [
-    "Plans",
-    "Payments Methods",
-    "Discounts",
-    "Others",
-    "Back"
+    'View Plan Details',
+    'Buy a Plan',
+    'Payment Assistance',
+    'Contact Sales',
+    'Back',
   ];
 
   const planOptions = [
-    "Silver Plan",
-    "Gold Plan",
-    "Platinum Plan",
-    "Back"
+    'Individual Basic',
+    'Individual Pro',
+    'Business',
+    'Business Pro',
+    'Buy a Plan',
+    'Back',
   ];
 
   const serviceOptions = [
-    "Content Creation",
-    "Advertising",
-    "Branding",
-    "Marketing Development",
-    "Back"
+    'Content Creation',
+    'Advertising',
+    'Branding',
+    'Marketing Development',
+    'Back',
   ];
 
   const paymentOptions = [
-    "Issues with the Payment Methods",
-    "Plan Not Activated",
-    "Payment Dispute",
-    "Upgrade Issues",
-    "Others",
-    "Back"
+    'Payment cancelled',
+    'Plan not activated',
+    'Payment amount dispute',
+    'Other payment issue',
+    'Back',
   ];
-
 
   const styles = {
     chatButtonStyle: { background: 'pink', marginBottom: 50 },
@@ -96,478 +408,441 @@ const FloatingChatBot = () => {
     voice: { disabled: true },
     audio: { disabled: true },
     botBubble: { simStream: true, showAvatar: true, avatar: '/images/chat-bot-icon.webp' },
-    chatHistory: { storageKey: "floating_chatbot", },
-    tooltip: { mode: "NEVER" },
+    chatHistory: { storageKey: 'floating_chatbot' },
+    tooltip: { mode: 'NEVER' },
     header: { title: 'Race Team', showAvatar: true, avatar: '/images/chat-bot-icon.webp' },
-    chatButton: { icon: '/images/chat-bot-icon.webp', },
+    chatButton: { icon: '/images/chat-bot-icon.webp' },
     notification: { volume: 0.1 },
     chatWindow: { defaultOpen: isDesktop },
     footer: { text: 'RACE EDITORIALE' },
     fileAttachment: { disabled: true },
-    emoji: { disabled: true }
+    emoji: { disabled: true },
   };
 
   const flow = {
     start: {
-      message: "Hello, I am Olivia 👋! Welcome to Race Auto India’s chatbot. How can I assist you today?",
+      message: "Hello, I am Olivia. Welcome to Race Auto India's chatbot. How can I assist you today?",
       transition: { duration: 0 },
-      path: "show_options",
-      chatDisabled: true
+      path: 'show_options',
+      chatDisabled: true,
     },
+
     show_options: {
-      message: "Here are a few helpful things you can check out:",
+      message: 'Here are a few helpful things you can check out:',
       options: helpOptions,
-      path: "process_options"
+      path: 'process_options',
     },
+
     process_options: {
       transition: { duration: 0 },
       chatDisabled: true,
       path: async (params) => {
         switch (params.userInput) {
-          case "Subscription Inquiries":
-            return "subscription_options";
-          case "Explore Our Services":
-            return "service_options";
-          case "Payment Assistance":
-            return "payment_options";
-          case "Latest News Coverage":
-            return "news_options";
-          case "Advertising":
-            return "advertising_options";
-          case "Other Queries":
-            return "other_queries";
+          case 'Subscription Inquiries':
+            return 'subscription_options';
+          case 'Explore Our Services':
+            return 'service_options';
+          case 'Payment Assistance':
+            return 'payment_options';
+          case 'Latest News Coverage':
+            return 'news_options';
+          case 'Advertising':
+            return 'advertising_options';
+          case 'Other Queries':
+            return 'other_queries';
           default:
-            return "unknown_input";
+            return 'unknown_input';
         }
       },
     },
 
-    // Subscription Inquiry Flow
     subscription_options: {
-      message: "Please choose from the following subscription-related topics:",
+      message: 'Please choose a subscription action:',
       options: subscriptionOptions,
-      path: async (params) => params.userInput === "Back" ? "show_options" : "process_subscription"
-    },
-    process_subscription: {
-      transition: { duration: 0 },
-      chatDisabled: true,
       path: async (params) => {
         switch (params.userInput) {
-          case "Plans":
-            return "plan_details";
-          case "Payments Methods":
-            return "message_payment_methods";
-          case "Discounts":
-            return "message_discounts";
-          case "Others":
-            return "message_others"
-          case "Back":
-            return "show_options"
+          case 'View Plan Details':
+            return 'plan_details';
+          case 'Buy a Plan':
+            return 'buy_plan_select';
+          case 'Payment Assistance':
+            return 'payment_options';
+          case 'Contact Sales':
+            setEnquiryTopic('Subscription sales enquiry');
+            return 'ask_enquiry_email';
           default:
-            return "unknown_input";
+            return 'show_options';
         }
-      }
+      },
     },
+
     plan_details: {
-      message: "We offer three subscription plans: Gold, Silver, and Platinum.",
+      message:
+        'Available plans: Individual Basic, Individual Pro, Business, and Business Pro. Select one for quick details.',
       options: planOptions,
-      path: async (params) => params.userInput === "Back" ? "subscription_options" : "plan_info"
-    },
-    plan_info: {
-      transition: { duration: 0 },
       path: async (params) => {
-        switch (params.userInput) {
-          case "Gold Plan":
-            // Delay to ensure the chat message appears
-            return "message_gold"; // Respond in chat before navigation
+        if (params.userInput === 'Back') return 'subscription_options';
+        if (params.userInput === 'Buy a Plan') return 'buy_plan_select';
 
-          case "Silver Plan":
-            return "message_silver";
-
-          case "Platinum Plan":
-            return "message_platinum";
-
-          case "Compare Plans":
-            return "message_compare";
-
-          default:
-            return "unknown_input";
+        const key = PLAN_LABEL_TO_KEY[params.userInput];
+        if (key) {
+          setSelectedPlan(key);
+          return `plan_info_${key}`;
         }
-      }
+
+        return 'unknown_input';
+      },
     },
 
-    message_gold: {
-      message: "✨ Gold Plan includes premium content access, priority support, and monthly analytics reports.",
-      transition: { duration: 1000 },
-      path: "back_option"
-    },
-    message_silver: {
-      message: "🥈 Silver Plan gives access to most content, standard support, and quarterly analytics reports.",
-      // options: silverPlan.length !== 0 ? silverPlan : null,
-      transition: { duration: 1000 },
-      path: "back_option"
-    },
-    message_platinum: {
-      message: "🏆 Platinum Plan offers full access, top-priority support, custom reports, and exclusive events.",
-      // options: platinumPlan.length !== 0 ? platinumPlan : null,
-      transition: { duration: 1000 },
-      path: "back_option"
-    },
-    // message_compare: {
-    //   message: "Gold: Premium access + Priority support. Silver: Standard access + Standard support. Platinum: All-inclusive + Exclusive perks.",
-    //   transition: { duration: 1000 },
-    //   path: "back_option"
-    // },
-
-    know_more: {
-      message: "You are currently on the subscription page, where you can view all details about the plan. Do you need any further assistance?",
-      options: ['Main menu', 'Previous Menu'],
-      path: async (params) => params.userInput === "Main menu" ? 'subscription_options' : "plan_details"
-    },
-    // Back option path
-    back_option: {
-      message: "Would you like to know more about this plan?",
-      options: ["Yes", "No"],
+    plan_info_bronze: {
+      message:
+        'Individual Basic gives you entry-level premium coverage designed for individual users.',
+      options: ['Buy this plan', 'View more plans', 'Back to subscription menu'],
       path: async (params) => {
-        if (params.userInput === "Yes") {
-          setTimeout(() => {
-            router.push("/subscription"); // Navigate after chatbot response
-          }, 500); // Delay ensures the message appears first
-          return "know_more"; // Chatbot continues to "know_more"
+        if (params.userInput === 'Buy this plan') {
+          setSelection('bronze');
+          return 'buy_plan_billing_cycle';
         }
-        return "plan_details";
-      }
+        if (params.userInput === 'View more plans') return 'plan_details';
+        return 'subscription_options';
+      },
     },
 
-    message_payment_methods: {
-      message: "We support online payments, including UPI, QR scanner, debit/credit cards, and net banking. To learn more about manual payment, please click the button below.",
-      options: ["Back", "Manual Payment"],
-      path: async (params) => params.userInput === "Manual Payment"
-        ? "manual_payment_info"
-        : "subscription_options"
-    },
-
-    manual_payment_info: {
-      message: "Please mail us your information at kh@raceinnovations.in. Our team will reach out within 24 working hours.",
-      options: ["Back"],
-      path: "message_payment_methods"
-    },
-
-    message_discounts: {
-      message: "We offer various discounts based on the plan you select. To know more, please choose a plan below.",
-      options: ["Silver", "Gold", "Platinum", "Back"],
+    plan_info_silver: {
+      message:
+        'Individual Pro gives broader content access and is built for advanced individual use.',
+      options: ['Buy this plan', 'View more plans', 'Back to subscription menu'],
       path: async (params) => {
-        switch (params.userInput) {
-          case "Silver":
-            return "silver_discount";
-          case "Gold":
-          case "Platinum":
-            return "gold_platinum_discount";
-          default:
-            return "subscription_options";
+        if (params.userInput === 'Buy this plan') {
+          setSelection('silver');
+          return 'buy_plan_billing_cycle';
         }
-      }
+        if (params.userInput === 'View more plans') return 'plan_details';
+        return 'subscription_options';
+      },
     },
 
-    silver_discount: {
-      message: "Currently, no promo codes are available for the Silver plan.",
-      options: ["Back"],
-      path: "message_discounts"
+    plan_info_gold: {
+      message:
+        'Business includes shared team access and is built for growing teams.',
+      options: ['Buy this plan', 'View more plans', 'Back to subscription menu'],
+      path: async (params) => {
+        if (params.userInput === 'Buy this plan') {
+          setSelection('gold');
+          return 'buy_plan_billing_cycle';
+        }
+        if (params.userInput === 'View more plans') return 'plan_details';
+        return 'subscription_options';
+      },
     },
 
-    gold_platinum_discount: {
-      message: "For this plan, you will receive a 5% discount on monthly subscriptions with the promo code RACE5 and a 10% discount on annual subscriptions with the promo code RACE10.",
-      options: ["Back"],
-      path: "message_discounts"
+    plan_info_platinum: {
+      message:
+        'Business Pro includes the broadest business access for high-scale team usage.',
+      options: ['Buy this plan', 'View more plans', 'Back to subscription menu'],
+      path: async (params) => {
+        if (params.userInput === 'Buy this plan') {
+          setSelection('platinum');
+          return 'buy_plan_billing_cycle';
+        }
+        if (params.userInput === 'View more plans') return 'plan_details';
+        return 'subscription_options';
+      },
     },
 
-
-    message_others: {
-      message: "For any other inquiries like upgradation or customization, feel free to reach out to us at **kh@raceinnovations.in** with your contact details. Our team will respond within 24 working hours.",
-      options: ["Back"],
-      path: "subscription_options"
+    buy_plan_select: {
+      message: 'Select the plan you want to purchase:',
+      options: ['Individual Basic', 'Individual Pro', 'Business', 'Business Pro', 'Back'],
+      path: async (params) => {
+        if (params.userInput === 'Back') return 'subscription_options';
+        const key = PLAN_LABEL_TO_KEY[params.userInput];
+        if (!key) return 'unknown_input';
+        setSelection(key);
+        return 'buy_plan_billing_cycle';
+      },
     },
 
+    buy_plan_billing_cycle: {
+      message: 'Choose your billing cycle:',
+      options: ['Monthly', 'Annual', 'Back'],
+      path: async (params) => {
+        if (params.userInput === 'Back') return 'buy_plan_select';
 
+        const cycle = params.userInput === 'Monthly' ? 'monthly' : 'annual';
+        setSelectedBillingCycle(cycle);
+        setSelectedAmount(getPriceFromRows(subscriptionRows, selectedPlan, cycle));
+        return 'buy_plan_summary';
+      },
+    },
+
+    buy_plan_summary: {
+      message: `You selected ${PLAN_KEY_TO_LABEL[selectedPlan]} (${selectedBillingCycle}) for INR ${selectedAmount.toLocaleString(
+        'en-IN'
+      )}. Continue to secure Razorpay checkout?`,
+      options: [
+        'Proceed to Secure Checkout',
+        'Change Billing Cycle',
+        'Change Plan',
+        'Back to Subscription Menu',
+      ],
+      path: async (params) => {
+        if (params.userInput === 'Change Billing Cycle') return 'buy_plan_billing_cycle';
+        if (params.userInput === 'Change Plan') return 'buy_plan_select';
+        if (params.userInput === 'Back to Subscription Menu') return 'subscription_options';
+
+        if (!userEmail) {
+          return 'purchase_login_required';
+        }
+
+        const checkoutResult = await startCheckoutIfEligible();
+        if (checkoutResult.blocked) {
+          return 'purchase_blocked_status';
+        }
+
+        return 'checkout_opened';
+      },
+    },
+
+    purchase_login_required: {
+      message: 'Please sign in first to complete plan purchase securely.',
+      options: ['Sign In', 'Back'],
+      path: async (params) => {
+        if (params.userInput === 'Sign In') {
+          persistPurchaseIntent({
+            plan: selectedPlan,
+            billingCycle: selectedBillingCycle,
+            amount: selectedAmount,
+          });
+          setShowAuthModal(true);
+          return 'purchase_login_wait';
+        }
+
+        clearPurchaseIntent();
+        return 'buy_plan_summary';
+      },
+    },
+
+    purchase_login_wait: {
+      message: 'Login or signup modal is open. Complete authentication to continue checkout.',
+      options: ['Back to Summary'],
+      path: async () => {
+        clearPurchaseIntent();
+        return 'buy_plan_summary';
+      },
+    },
+
+    purchase_blocked_status: {
+      message: () =>
+        purchaseStatusMessage ||
+        'We could not continue to payment right now. Please review your subscription status and try again.',
+      options: ['Manage Subscription', 'Back to Subscription Menu'],
+      path: async (params) => {
+        if (params.userInput === 'Manage Subscription') {
+          router.push('/profile/subscription');
+          return 'show_options';
+        }
+
+        return 'subscription_options';
+      },
+    },
+
+    checkout_opened: {
+      message:
+        'Secure checkout has been opened. Complete payment to activate your subscription using the existing Race Auto India flow.',
+      options: ['Back to Subscription Menu', 'Main menu'],
+      path: async (params) =>
+        params.userInput === 'Back to Subscription Menu' ? 'subscription_options' : 'show_options',
+    },
 
     payment_options: {
-      message: `For any payment-related issues, please select an option below.`,
+      message: 'Choose the payment issue you are facing:',
       options: paymentOptions,
       path: async (params) => {
-        switch (params.userInput) {
-          case "Payment Method Issues":
-            return "ask_email_payment_method";
-          case "Plan Not Activated":
-            return "ask_email_payment_not_activated";
-          case "Payment Dispute":
-            return "ask_email_payment_value_dispute";
-          case "Upgrade Issues":
-            return "ask_email_payment_upgrade";
-          case "Others":
-            return "ask_email_payment_other";
-          default:
-            return "unknown_input";
+        if (params.userInput === 'Back') return 'show_options';
+
+        const topicMap = {
+          'Payment cancelled': 'Payment cancelled issue',
+          'Plan not activated': 'Plan not activated after payment',
+          'Payment amount dispute': 'Payment amount dispute',
+          'Other payment issue': 'Other payment issue',
+        };
+
+        const topic = topicMap[params.userInput];
+        if (!topic) return 'unknown_input';
+
+        setEnquiryTopic(topic);
+        return 'ask_enquiry_email';
+      },
+    },
+
+    ask_enquiry_email: {
+      message:
+        'Please type your email address so our team can contact you. We will submit this through our official support email flow.',
+      path: async (params) => {
+        const email = String(params.userInput || '').trim().toLowerCase();
+        if (!isValidEmail(email)) {
+          return 'invalid_enquiry_email';
         }
-      }
+
+        try {
+          await submitEnquiryEmail(email);
+          toast.success('Enquiry submitted successfully. Our team will contact you soon.');
+          return 'enquiry_sent';
+        } catch {
+          return 'enquiry_failed';
+        }
+      },
     },
 
-    ask_email_payment_method: {
-      message: "If you're having payment issues, try updating details or using another method. Still unresolved? Share your email for further assistance.",
-      function: (params) => sendEmail(params.userInput, "Payment Method Issue"),
-      path: "confirm_email",
+    invalid_enquiry_email: {
+      message: 'That email looks invalid. Please enter a valid email address.',
+      path: 'ask_enquiry_email',
     },
 
-    ask_email_payment_not_activated: {
-      message: "If your plan isn’t activated, verify the payment or check for banking issues. Still facing trouble? Provide your email or contact us at kh@raceinnovations.in with payment proof.",
-      function: (params) => sendEmail(params.userInput, "Payment Not Activated Issue"),
-      path: "confirm_email",
+    enquiry_sent: {
+      message: 'Your enquiry has been submitted. Our team will respond as soon as possible.',
+      options: ['Main menu', 'Back'],
+      path: async (params) =>
+        params.userInput === 'Back' ? 'subscription_options' : 'show_options',
     },
 
-    ask_email_payment_value_dispute: {
-      message: "If your payment amount is incorrect, check with your bank. Still an issue? Enter your email or contact us at kh@raceinnovations.in with proof.",
-      function: (params) => sendEmail(params.userInput, "Payment Value Dispute"),
-      path: "confirm_email",
+    enquiry_failed: {
+      message:
+        'We could not submit your enquiry right now. You can retry here or contact us on the contact page.',
+      options: ['Try Again', 'Contact Page', 'Main menu'],
+      path: async (params) => {
+        if (params.userInput === 'Try Again') return 'ask_enquiry_email';
+        if (params.userInput === 'Contact Page') {
+          router.push('/contact');
+          return 'show_options';
+        }
+        return 'show_options';
+      },
     },
 
-    ask_email_payment_upgrade: {
-      message: "It seems you're facing an issue with upgrading your payment plan. Please enter your email for assistance.",
-      function: (params) => sendEmail(params.userInput, "Payment Upgrade Issue"),
-      path: "confirm_email",
-    },
-
-    ask_email_payment_other: {
-      message: "For any other payment-related issues, please provide your email so we can assist you.",
-      function: (params) => sendEmail(params.userInput, "Other Payment Issue"),
-      path: "confirm_email",
-    },
-
-    confirm_email: {
-      message: `Our team will reach out within 24 hours regarding your issue.`,
-      options: ["Back"],
-      path: "payment_options"
-    },
-
-    // Function to send email
-
-
-    // Service Flow
     service_options: {
-      message: "Explore our various services below:",
+      message: 'Explore our services below:',
       options: serviceOptions,
-      path: async (params) => params.userInput === "Back" ? "show_options" : "services_process"
-    },
-
-    services_process: {
-      transition: { duration: 0 },
       path: async (params) => {
-        switch (params.userInput) {
-          case "Content Creation":
-            return "message_content_creation";
-          case "Advertising":
-            return "message_advertising";
-          case "Branding":
-            return "message_branding";
-          case "Marketing Development":
-            return "message_marketing_development";
-          default:
-            return "unknown_input";
-        }
-      }
+        if (params.userInput === 'Back') return 'show_options';
+
+        const serviceMap = {
+          'Content Creation': 'Content creation service enquiry',
+          Advertising: 'Service enquiry for advertising',
+          Branding: 'Branding service enquiry',
+          'Marketing Development': 'Marketing development service enquiry',
+        };
+
+        const topic = serviceMap[params.userInput];
+        if (!topic) return 'unknown_input';
+
+        setEnquiryTopic(topic);
+        return 'ask_enquiry_email';
+      },
     },
 
-    message_content_creation: {
-      message: "Our content creation services include high-quality articles, blogs, videos, and social media content tailored to engage your audience. Let us craft compelling stories for your brand. For inquiries, reach out to us at **kh@raceinnovations.in**.",
-      options: ["Back"],
-      path: "service_options"
-    },
-
-    message_advertising: {
-      message: "We provide strategic advertising solutions, including digital ads, print media, and social media promotions to maximize your brand’s reach and engagement. For more details, contact us at **kh@raceinnovations.in**.",
-      options: ["Back"],
-      path: "service_options"
-    },
-
-    message_branding: {
-      message: "Our branding services help establish a strong brand identity through logo design, visual aesthetics, and messaging that resonates with your target audience. To discuss your branding needs, email us at **kh@raceinnovations.in**.",
-      options: ["Back"],
-      path: "service_options"
-    },
-
-    message_marketing_development: {
-      message: "We create tailored marketing strategies, including market research, campaign planning, and execution, to help grow your business effectively. For expert guidance, reach us at **kh@raceinnovations.in**.",
-      options: ["Back"],
-      path: "service_options"
-    },
-
-
-    // Additional Sections
     news_options: {
-      message: "Here you can explore our latest news updates or report any issues with published articles.",
-      options: [
-        "Latest News Updates",
-        "Segment Specific Updates",
-        "Issues with Published News",
-        "Back"
-      ],
-      path: async (params) => params.userInput === "Back" ? "show_options" : "news_process"
-    },
-
-    news_process: {
-      transition: { duration: 0 },
+      message: 'Choose a news support option:',
+      options: ['Latest News Updates', 'Segment Specific Updates', 'Issues with Published News', 'Back'],
       path: async (params) => {
-        switch (params.userInput) {
-          case "Latest News Updates":
-            return "message_latest_news";
-          case "Segment Specific Updates":
-            return "message_segment_updates";
-          case "Data Upgradation":
-            return "message_data_upgradation";
-          case "Issues with Published News":
-            return "message_news_issues";
-          default:
-            return "unknown_input";
+        if (params.userInput === 'Back') return 'show_options';
+        if (params.userInput === 'Latest News Updates') return 'message_latest_news';
+        if (params.userInput === 'Segment Specific Updates') return 'message_segment_updates';
+        if (params.userInput === 'Issues with Published News') {
+          setEnquiryTopic('Issue with published news');
+          return 'ask_enquiry_email';
         }
-      }
+        return 'unknown_input';
+      },
     },
 
     message_segment_updates: {
-      message: `Explore the latest updates in different segments:\n
-      - [Cars](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/cars)\n
-      - [Bikes](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/bikes)\n
-      - [ThreeWheeler](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/3w)\n
-      - [Agricultural Machinery](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/agriculture)\n
-      - [Construction and Machinery](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/construction)\n
-      - [Commercial Vehicles](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/commercial-vehicles)`,
-      options: ["Back"],
-      path: "news_options"
+      message: `Explore updates in key segments:\n- [Cars](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/cars)\n- [Bikes](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/bikes)\n- [ThreeWheeler](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/3w)\n- [Agricultural Machinery](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/agriculture)\n- [Construction and Machinery](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/construction)\n- [Commercial Vehicles](${process.env.NEXT_PUBLIC_BACKEND_URL}/news/commercial-vehicles)`,
+      options: ['Back'],
+      path: 'news_options',
     },
-
-
 
     message_latest_news: {
-      message: latestNews.map(news => `${news.title} - [Read More](${news.link})`).join("\n"),
-      options: ["Back"],
-      path: "news_options"
-    },
-
-
-    message_news_issues: {
-      message: `**📢 Report Issues with Published News**\n\n
-      If you find any inaccuracies or need corrections in an article, please provide the following details:\n
-      - **Article Title** 📝  
-      - **Your Concern** 🧐  
-      - **Required Changes** ✍️  
-      - **Your Email ID** 📧  
-      - **Your Phone Number** 📞\n\n
-      Send the details to **[kh@raceinnovations.in](mailto:kh@raceinnovations.in)**, and our team will review and update the article as needed.`,
-      options: ["⬅️ Back"],
-      path: "news_options"
+      message: latestNewsMessage,
+      options: ['Back'],
+      path: 'news_options',
     },
 
     advertising_options: {
-      message: `For advertising inquiries, please select an option below.`,
-      options: ["Web Advertising", "Magazine Advertising", "Others", "Back"],
+      message: 'Choose your advertising enquiry type:',
+      options: ['Web Advertising', 'Magazine Advertising', 'Other Advertising', 'Back'],
       path: async (params) => {
-        switch (params.userInput) {
-          case "Web Advertising":
-            return "ask_email_web_advertising";
-          case "Magazine Advertising":
-            return "ask_email_magazine_advertising";
-          case "Others":
-            return "ask_email_advertising_other";
-          case "Back":
-            return "process_options"
-          default:
-            return "unknown_input";
-        }
-      }
-    },
+        if (params.userInput === 'Back') return 'show_options';
 
-    ask_email_web_advertising: {
-      message: "To advertise on our website, please provide your email ID for further details.",
-      function: (params) => sendEmail(params.userInput, "Web Advertising Inquiry"),
-      path: "confirm_advertising_email",
-    },
+        const topicMap = {
+          'Web Advertising': 'Web advertising enquiry',
+          'Magazine Advertising': 'Magazine advertising enquiry',
+          'Other Advertising': 'General advertising enquiry',
+        };
 
-    ask_email_magazine_advertising: {
-      message: "To advertise in our magazine, please provide your email ID for further details.",
-      function: (params) => sendEmail(params.userInput, "Magazine Advertising Inquiry"),
-      path: "confirm_advertising_email",
-    },
+        const topic = topicMap[params.userInput];
+        if (!topic) return 'unknown_input';
 
-    ask_email_advertising_other: {
-      message: "For any other advertising inquiries, please provide your email ID so we can assist you.",
-      function: (params) => sendEmail(params.userInput, "Other Advertising Inquiry"),
-      path: "confirm_advertising_email",
-    },
-
-    confirm_advertising_email: {
-      message: `Our team will reach out within 24 hours regarding your advertising inquiry.`,
-      options: ["Back"],
-      path: "advertising_options"
+        setEnquiryTopic(topic);
+        return 'ask_enquiry_email';
+      },
     },
 
     other_queries: {
-      message: "Please let us know your query, and our team will get back to you shortly.",
-      path: "show_options"
+      message:
+        'Please share your email so we can route your query to the right team and respond quickly.',
+      path: async (params) => {
+        const email = String(params.userInput || '').trim().toLowerCase();
+        if (!isValidEmail(email)) {
+          setEnquiryTopic('General enquiry');
+          return 'invalid_enquiry_email';
+        }
+
+        setEnquiryTopic('General enquiry');
+        try {
+          await submitEnquiryEmail(email);
+          return 'enquiry_sent';
+        } catch {
+          return 'enquiry_failed';
+        }
+      },
     },
 
     unknown_input: {
-      message: "Sorry, I didn't understand that. Could you please select an option below?",
+      message: 'Sorry, I did not understand that. Please choose one of the options below.',
       options: helpOptions,
-      path: "process_options"
-    }
+      path: 'process_options',
+    },
   };
 
-  const sendEmail = (userEmail, issueType) => {
-    const templateParams = {
-      user_email: userEmail,
-      message: `${issueType}. User Email: ${userEmail}`,
-    };
-
-    emailjs
-      .send("service_ozx53eb", "template_kfrvsrl", templateParams, {
-        publicKey: "KUwUOlg39l7VrDi7m",
-      })
-      .then(
-        () => {
-          toast.success("Message Submitted! Our team will contact you soon.", {
-            position: "top-right",
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          });
-        },
-        (error) => {
-          console.log(error);
-          toast.warn(
-            "An error occurred while submitting the form. Please try again later.",
-            {
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            }
-          );
-        }
-      );
-  }
-
-  useEffect(() => {
-
-    latestNewsApi()
-  }, [])
-
   return (
-    <ChatBot id="floating-chat-bot" flow={flow} settings={settings} styles={styles}></ChatBot>
+    <>
+      <ChatBot id="floating-chat-bot" flow={flow} settings={settings} styles={styles} />
+
+      <AuthModal show={showAuthModal} onClose={handleAuthModalClose} />
+
+      <Modal
+        show={showCheckoutModal}
+        onHide={() => setShowCheckoutModal(false)}
+        size="lg"
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title className="text-center w-100">Secure Checkout</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <RazorpayPaymentForm
+            closeModal={() => setShowCheckoutModal(false)}
+            planInfo={{
+              planTier: selectedPlan,
+              billingCycle: selectedBillingCycle,
+              price: selectedAmount,
+            }}
+          />
+        </Modal.Body>
+      </Modal>
+    </>
   );
 };
 

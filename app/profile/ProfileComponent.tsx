@@ -85,7 +85,9 @@ function ProfileDashboard({ token }: { token: string }) {
   const [subscriptionPack, setSubscriptionPack] = useState<any[]>([]);
   const [plan, setPlan] = useState<any[]>([]);
   const [membershipData, setMembershipData] = useState<any | null>(null);
+  const [pendingMembershipRequest, setPendingMembershipRequest] = useState<any | null>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [seatLimit, setSeatLimit] = useState(0);
   const [memberEmailInput, setMemberEmailInput] = useState("");
   const [memberActionMsg, setMemberActionMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -115,8 +117,10 @@ function ProfileDashboard({ token }: { token: string }) {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/subscription/effective/${decoded.email}`
       );
       setMembershipData(res.data?.membership ?? null);
+      setPendingMembershipRequest(res.data?.pendingMembership ?? null);
     } catch {
       setMembershipData(null);
+      setPendingMembershipRequest(null);
     }
   };
 
@@ -127,9 +131,11 @@ function ProfileDashboard({ token }: { token: string }) {
         { withCredentials: true }
       );
       setMembers(res.data?.members ?? []);
+      setPendingInvites(res.data?.pendingInvites ?? []);
       setSeatLimit(res.data?.seatLimit ?? 0);
     } catch {
       setMembers([]);
+      setPendingInvites([]);
     }
   };
 
@@ -139,16 +145,38 @@ function ProfileDashboard({ token }: { token: string }) {
     if (!memberEmail) return;
 
     try {
-      await axios.post(
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/business-members`,
         { memberEmail },
         { withCredentials: true }
       );
       setMemberEmailInput("");
-      setMemberActionMsg({ text: "Member added successfully.", ok: true });
+      setMemberActionMsg({
+        text:
+          res.data?.message ||
+          "Membership request created. Ask the member to log in and accept the membership from their profile.",
+        ok: true,
+      });
       fetchMembers();
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? "Failed to add member.";
+      setMemberActionMsg({ text: msg, ok: false });
+    }
+  };
+
+  const handleAcceptPendingMembership = async () => {
+    setMemberActionMsg(null);
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/business-members/accept`,
+        {},
+        { withCredentials: true }
+      );
+      setMemberActionMsg({ text: res.data?.message || "Membership approved successfully.", ok: true });
+      await effectiveApi();
+      await packApi();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? "Failed to accept membership.";
       setMemberActionMsg({ text: msg, ok: false });
     }
   };
@@ -157,6 +185,7 @@ function ProfileDashboard({ token }: { token: string }) {
   const isOwnActive = effectivePlan !== "none";
   const isExpired = subscriptionPack[0]?.status === "expired";
   const isMember = membershipData !== null;
+  const hasPendingMembershipRequest = pendingMembershipRequest !== null;
   const membershipPlan = isMember ? normalizePlanName(membershipData.plan_name) : "none";
   const resolvedPlanForDetails = isOwnActive ? effectivePlan : membershipPlan;
   const isBusinessOwner = isOwnActive && isBusinessPlan(effectivePlan);
@@ -176,15 +205,19 @@ function ProfileDashboard({ token }: { token: string }) {
     }
   };
 
+  // Existing profile data loaders are intentionally run on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     userInfo();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Existing profile subscription loaders are intentionally run on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     subscriptionApi();
     packApi();
     effectiveApi();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (subscription.length !== 0) {
@@ -197,11 +230,13 @@ function ProfileDashboard({ token }: { token: string }) {
     }
   }, [resolvedPlanForDetails, subscription]);
 
+  // Existing business owner member list loader is intentionally triggered by owner eligibility.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isBusinessOwner) {
       fetchMembers();
     }
-  }, [isBusinessOwner]);
+  }, [isBusinessOwner]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const usedSeats = members.length;
   const remainingSeats = Math.max(0, seatLimit - usedSeats);
@@ -404,6 +439,38 @@ function ProfileDashboard({ token }: { token: string }) {
         </Card>
       )}
 
+      {hasPendingMembershipRequest && !isMember && (
+        <Card className={`${styles.surfaceCard} ${styles.noticeCard}`}>
+          <Card.Body className="p-0">
+            <div className={styles.badgeRow}>
+              <span className={styles.infoBadge}>Membership Invitation</span>
+              <span className={styles.infoBadge}>Pending Approval</span>
+            </div>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h3 className={styles.sectionTitle}>Membership Invitation</h3>
+                <p className={styles.sectionDescription}>
+                  You have been invited to join a shared {getPlanUITitle(pendingMembershipRequest.plan_name)} plan.
+                  Accept the invitation to activate shared access.
+                </p>
+              </div>
+              <button className={styles.primaryButton} type="button" onClick={handleAcceptPendingMembership}>
+                Accept Membership
+              </button>
+            </div>
+
+            <div className={styles.tableGrid}>
+              <div className={styles.tableLabel}>Plan</div>
+              <div className={styles.tableValue}>{getPlanUITitle(pendingMembershipRequest.plan_name)}</div>
+              <div className={styles.tableLabel}>Invited by</div>
+              <div className={styles.tableValue}>{pendingMembershipRequest.owner_email || "-"}</div>
+              <div className={styles.tableLabel}>Requested on</div>
+              <div className={styles.tableValue}>{formatDate(pendingMembershipRequest.invited_at)}</div>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+
       {isBusinessOwner && (
         <Card className={`${styles.surfaceCard} ${styles.sectionCard}`}>
           <Card.Body className="p-0">
@@ -411,7 +478,7 @@ function ProfileDashboard({ token }: { token: string }) {
               <div>
                 <h3 className={styles.sectionTitle}>Team Access</h3>
                 <p className={styles.sectionDescription}>
-                  Add members to your <strong>{getPlanUITitle(effectivePlan)}</strong> plan. Assigned seats remain consumed for the active subscription term. This UI keeps add-only access and does not change existing backend behavior.
+                  Add members to your <strong>{getPlanUITitle(effectivePlan)}</strong> plan. Members receive access only after they log in and accept the membership from their profile.
                 </p>
               </div>
             </div>
@@ -458,15 +525,32 @@ function ProfileDashboard({ token }: { token: string }) {
             )}
 
             {members.length === 0 ? (
-              <div className={styles.infoItem}>
-                <span className={styles.infoValueMuted}>No members added yet.</span>
-              </div>
-            ) : (
+              pendingInvites.length === 0 ? (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoValueMuted}>No members added yet.</span>
+                </div>
+              ) : null
+            ) : null}
+
+            {(members.length > 0 || pendingInvites.length > 0) && (
               <div className={styles.memberList}>
                 {members.map((m: any) => (
-                  <div key={m.id} className={styles.memberListItem}>
+                  <div key={`active-${m.id}`} className={styles.memberListItem}>
                     <span className={styles.memberEmail}>{m.member_email}</span>
-                    <span className={styles.successBadge}>Assigned</span>
+                    <span className={styles.successBadge}>Approved</span>
+                  </div>
+                ))}
+
+                {pendingInvites.map((invite: any) => (
+                  <div key={`pending-${invite.id}`} className={styles.memberListItem}>
+                    <div className={styles.memberMeta}>
+                      <span className={styles.memberEmail}>{invite.member_email}</span>
+                      <span className={styles.pendingCaption}>Ask the member to log in and accept from Profile</span>
+                    </div>
+                    <div className={styles.memberActions}>
+                      <span className={styles.infoBadge}>Pending Approval</span>
+                      <span className={styles.pendingCaption}>In-app approval only</span>
+                    </div>
                   </div>
                 ))}
               </div>

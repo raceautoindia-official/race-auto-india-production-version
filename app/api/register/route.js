@@ -60,6 +60,9 @@ import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
+import { welcomeEmailTemplate } from "@/lib/emailTemplates";
+import { sendSesEmail } from "@/lib/sesMailer";
+import { markEmailEventIfNew } from "@/lib/emailNotificationLog";
 
 export async function POST(req) {
   try {
@@ -94,11 +97,34 @@ export async function POST(req) {
 
     // 4. Insert new user
     const [result] = await db.execute(
-      `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
-      [username, email, hash]
+      `INSERT INTO users (username, email, password, role, subscription) VALUES (?, ?, ?, ?, ?)`,
+      [username, email, hash, "user", 0]
     );
     // result.insertId contains the new user’s ID
     const userId = result.insertId;
+
+    try {
+      const shouldSendWelcome = await markEmailEventIfNew({
+        eventType: "welcome_email",
+        eventKey: `welcome-user:${userId}`,
+        userId,
+        email,
+      });
+      if (shouldSendWelcome) {
+        const template = welcomeEmailTemplate(username);
+        void sendSesEmail({
+          to: email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        }).catch((mailErr) => {
+          console.error("welcome email async send error:", mailErr);
+        });
+      }
+    } catch (mailErr) {
+      // Do not block account creation for email failures.
+      console.error("welcome email send error:", mailErr);
+    }
 
     // 5. Sign a JWT
     const token = jwt.sign(

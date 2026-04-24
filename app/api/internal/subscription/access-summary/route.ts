@@ -2,6 +2,14 @@ import db from "@/lib/db";
 import { checkInternalApiKey } from "@/lib/internalAuth";
 import { NextRequest, NextResponse } from "next/server";
 
+function isEffectivelyActive(status: any, endDate: any): boolean {
+  const statusValue = String(status || "").toLowerCase().trim();
+  if (statusValue !== "active") return false;
+  if (!endDate) return false;
+  const expiryMs = new Date(endDate).getTime();
+  return Number.isFinite(expiryMs) && expiryMs >= Date.now();
+}
+
 /**
  * GET /api/internal/subscription/access-summary?email=user@example.com
  *
@@ -36,10 +44,13 @@ export async function GET(req: NextRequest) {
 
     // ── 1. Look up user ──────────────────────────────────────────────────────
     const [userRows]: any = await db.execute(
-      `SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1`,
+      `SELECT id, role FROM users WHERE LOWER(email) = ? LIMIT 1`,
       [email]
     );
     const userId: number | null = userRows[0]?.id ?? null;
+    const role: string | null = userRows[0]?.role ? String(userRows[0].role) : null;
+
+    let pendingMembershipStatus: "pending" | null = null;
 
     // ── 2. Check direct (own) active subscription ────────────────────────────
     let directPlan: {
@@ -53,7 +64,7 @@ export async function GET(req: NextRequest) {
       const [ownRows]: any = await db.execute(
         `SELECT plan_name, status, start_date, end_date
          FROM subscriptions
-         WHERE user_id = ? AND LOWER(status) = 'active' AND end_date >= NOW()
+         WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
          ORDER BY end_date DESC
          LIMIT 1`,
         [userId]
@@ -94,7 +105,7 @@ export async function GET(req: NextRequest) {
         `SELECT s.start_date, s.end_date, u.email AS owner_email
          FROM subscriptions s
          JOIN users u ON u.id = s.user_id
-         WHERE s.user_id = ? AND LOWER(s.status) = 'active' AND s.end_date >= NOW()
+         WHERE s.user_id = ? AND LOWER(s.status) = 'active' AND s.start_date <= NOW() AND s.end_date >= NOW()
          ORDER BY s.end_date DESC
          LIMIT 1`,
         [ownerUserId]
@@ -108,6 +119,32 @@ export async function GET(req: NextRequest) {
           startDate: ownerSub[0].start_date ? String(ownerSub[0].start_date) : null,
           endDate: ownerSub[0].end_date ? String(ownerSub[0].end_date) : null,
         };
+      }
+    }
+
+    if (!sharedPlan) {
+      const [pendingRows]: any = await db.execute(
+        `SELECT bi.owner_user_id
+         FROM business_member_invites bi
+         WHERE LOWER(bi.member_email) = ? AND bi.status = 'pending'
+         ORDER BY bi.id DESC
+         LIMIT 1`,
+        [email]
+      ).catch(() => [[]]);
+
+      if (Array.isArray(pendingRows) && pendingRows.length > 0) {
+        const [ownerSub]: any = await db.execute(
+          `SELECT 1
+           FROM subscriptions
+           WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
+           ORDER BY end_date DESC
+           LIMIT 1`,
+          [pendingRows[0].owner_user_id]
+        );
+
+        if (ownerSub.length > 0) {
+          pendingMembershipStatus = "pending";
+        }
       }
     }
 
@@ -129,11 +166,22 @@ export async function GET(req: NextRequest) {
       planSource = "shared";
     }
 
-    const effectiveStatus: "active" | "inactive" | "free" =
-      hasDirectPlan || hasSharedPlan ? "active" : "free";
+    const directActive = directPlan
+      ? isEffectivelyActive(directPlan.status, directPlan.endDate)
+      : false;
+    const sharedActive = sharedPlan
+      ? isEffectivelyActive(sharedPlan.status, sharedPlan.endDate)
+      : false;
+
+    const effectiveStatus: "active" | "inactive" | "free" = directActive || sharedActive
+      ? "active"
+      : hasDirectPlan || hasSharedPlan
+      ? "inactive"
+      : "free";
 
     return NextResponse.json({
       email,
+      role,
       hasDirectPlan,
       hasSharedPlan,
       accessType,
@@ -142,6 +190,8 @@ export async function GET(req: NextRequest) {
       effectivePlan,
       effectiveStatus,
       planSource,
+      membership_status: sharedPlan ? "approved" : pendingMembershipStatus,
+      membership_approved: sharedPlan ? true : pendingMembershipStatus ? false : null,
     });
   } catch (err) {
     console.error("GET /api/internal/subscription/access-summary error:", err);

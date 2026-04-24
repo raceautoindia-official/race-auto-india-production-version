@@ -23,13 +23,34 @@ export async function GET(req: NextRequest) {
 
     const user = results[0];
 
-    // Fetch subscriptions using user_id
-    const [subscriptionRows]: any = await db.execute(
-      "SELECT * FROM subscriptions WHERE user_id = ?",
-      [user.id]  // Access the first result's id
+    // Prefer currently active paid plan; otherwise return most recent row as expired for UI context.
+    const [activeRows]: any = await db.execute(
+      `SELECT *
+       FROM subscriptions
+       WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
+       ORDER BY end_date DESC
+       LIMIT 1`,
+      [user.id]
     );
 
-    return NextResponse.json(subscriptionRows);
+    if (activeRows.length > 0) {
+      return NextResponse.json([activeRows[0]]);
+    }
+
+    const [latestRows]: any = await db.execute(
+      `SELECT *
+       FROM subscriptions
+       WHERE user_id = ?
+       ORDER BY end_date DESC, id DESC
+       LIMIT 1`,
+      [user.id]
+    );
+
+    if (latestRows.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    return NextResponse.json([{ ...latestRows[0], status: "expired" }]);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ err: "Internal server error" }, { status: 500 });

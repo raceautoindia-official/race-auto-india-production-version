@@ -98,10 +98,10 @@ const SubscriptionTable = () => {
           <thead>
             <tr>
               <th>Plan</th>
-              <th>Platinum</th>
-              <th>Gold</th>
-              <th>Silver</th>
-              <th>Bronze</th>
+              <th>Business Pro</th>
+              <th>Business</th>
+              <th>Individual Pro</th>
+              <th>Individual Basic</th>
               <th>Actions</th>
             </tr>
           </thead>

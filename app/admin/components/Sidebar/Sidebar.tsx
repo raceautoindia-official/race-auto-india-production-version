@@ -242,17 +242,6 @@ const AdminSidebar = async () => {
               </li>
               <li>
                 <Link
-                  href="/admin/subscription/trial-leads"
-                  className="nav-link px-0"
-                >
-                  <FaSitemap className="text-primary" />{" "}
-                  <span className="d-none d-sm-inline text-primary">
-                    Trial Subscribers
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/admin/subscription/payment/upi-payment"
                   className="nav-link px-0"
                 >

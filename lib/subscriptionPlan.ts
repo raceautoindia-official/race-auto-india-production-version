@@ -16,10 +16,10 @@ export const PLAN_NAME = {
 
 export const PLAN_LABEL = {
   none: "No Plan",
-  bronze: "Bronze",
-  silver: "Silver",
-  gold: "Gold",
-  platinum: "Platinum",
+  bronze: "Individual Basic",
+  silver: "Individual Pro",
+  gold: "Business",
+  platinum: "Business Pro",
 } as const;
 
 export const PLAN_TEXT_CLASS = {

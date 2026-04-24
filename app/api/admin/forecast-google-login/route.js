@@ -1,5 +1,8 @@
 import db from "@/lib/db"; // Your MySQL connection (mysql2/promise or Prisma or any ORM)
 import { NextResponse } from "next/server"; // Use express `res` if not in Next.js
+import { welcomeEmailTemplate } from "@/lib/emailTemplates";
+import { sendSesEmail } from "@/lib/sesMailer";
+import { markEmailEventIfNew } from "@/lib/emailNotificationLog";
 
 export async function POST(req) {
   try {
@@ -20,10 +23,35 @@ export async function POST(req) {
 
     if (existingUsers.length === 0) {
       // 2. Insert new user
-      await db.execute(
-        "INSERT INTO users (username, slug, email, google_id, role) VALUES (?, ?, ?, ?, ?)",
-        [username, slug, email, google_id, "user"]
+      const [insertResult] = await db.execute(
+        "INSERT INTO users (username, slug, email, google_id, role, subscription) VALUES (?, ?, ?, ?, ?, ?)",
+        [username, slug, email, google_id, "user", 0]
       );
+      const userId = insertResult?.insertId ?? null;
+
+      try {
+        if (userId) {
+          const shouldSendWelcome = await markEmailEventIfNew({
+            eventType: "welcome_email",
+            eventKey: `welcome-user:${userId}`,
+            userId,
+            email,
+          });
+          if (shouldSendWelcome) {
+            const template = welcomeEmailTemplate(username);
+            void sendSesEmail({
+              to: email,
+              subject: template.subject,
+              html: template.html,
+              text: template.text,
+            }).catch((sendErr) => {
+              console.error("forecast google welcome email async error:", sendErr);
+            });
+          }
+        }
+      } catch (mailErr) {
+        console.error("forecast google welcome email error:", mailErr);
+      }
 
       // 3. Fetch the new user
       const [newUserRows] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);

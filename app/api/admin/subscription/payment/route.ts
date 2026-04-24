@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { INTERNAL_NOTIFICATION_RECIPIENTS_STRING } from "@/lib/internalNotificationRecipients";
 import s3Client from "@/lib/s3Client";
 import { mailTransporter } from "@/utils/Mailer";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const mailContent: any = {
       from: email,
-      to: "raceautoindia@gmail.com",
+      to: INTERNAL_NOTIFICATION_RECIPIENTS_STRING,
       subject: subject,
       html: body,
     };

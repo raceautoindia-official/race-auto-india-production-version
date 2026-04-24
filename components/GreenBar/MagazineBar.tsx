@@ -28,7 +28,7 @@ const GreenBar = () => {
                 <div className="d-flex justify-content-between align-items-center">
 
                         <h5 className="mt-2 e-magazine-heading">
-                        Start your 30 day free trial
+                        Explore Premium Membership
                         </h5>
 
                     <div>
@@ -42,7 +42,7 @@ const GreenBar = () => {
                     <hr/>
                     <div className="d-flex justify-content-evenly mb-2">
                     <div>
-                    Unlock the full potential with our 30-day free trial! Subscribe now!
+                    Unlock the full potential with premium membership. Subscribe now!
                     </div>
                     <button className={`subscribe-button mx-3 ${isBlinking ? 'blink' : ''}`} onClick={()=>{router.push('/subscription')}}>Subscribe now</button>
                 </div>

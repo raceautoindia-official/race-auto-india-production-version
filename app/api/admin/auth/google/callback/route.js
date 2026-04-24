@@ -2,6 +2,9 @@ import db from "@/lib/db";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
+import { welcomeEmailTemplate } from "@/lib/emailTemplates";
+import { sendSesEmail } from "@/lib/sesMailer";
+import { markEmailEventIfNew } from "@/lib/emailNotificationLog";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -51,15 +54,42 @@ export async function GET(req) {
     let token;
     if (result.length === 0) {
       // Insert new user
-      await db.execute(
-        "INSERT INTO users (username, slug, email, google_id) VALUES (?, ?, ?, ?)",
+      const [insertResult] = await db.execute(
+        "INSERT INTO users (username, slug, email, google_id, role, subscription) VALUES (?, ?, ?, ?, ?, ?)",
         [
           userInfo.name,
           userInfo.name.toLowerCase().split(" ").join("-"),
           userInfo.email,
           userInfo.sub,
+          "user",
+          0,
         ]
       );
+      const insertedUserId = insertResult?.insertId ?? null;
+
+      try {
+        if (insertedUserId) {
+          const shouldSendWelcome = await markEmailEventIfNew({
+            eventType: "welcome_email",
+            eventKey: `welcome-user:${insertedUserId}`,
+            userId: insertedUserId,
+            email: userInfo.email,
+          });
+          if (shouldSendWelcome) {
+            const template = welcomeEmailTemplate(userInfo.name);
+            void sendSesEmail({
+              to: userInfo.email,
+              subject: template.subject,
+              html: template.html,
+              text: template.text,
+            }).catch((sendErr) => {
+              console.error("google callback welcome email async error:", sendErr);
+            });
+          }
+        }
+      } catch (mailErr) {
+        console.error("google callback welcome email error:", mailErr);
+      }
 
       const [newUser] = await db.execute("SELECT * FROM users WHERE email = ?", [userInfo.email]);
 

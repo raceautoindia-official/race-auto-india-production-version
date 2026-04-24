@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { INTERNAL_NOTIFICATION_RECIPIENTS } from "@/lib/internalNotificationRecipients";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,12 +21,7 @@ const sesAccessKeyId = process.env.AWS_SES_ACCESS_KEY_ID ?? process.env.AWS_S3_A
 const sesSecretAccessKey =
   process.env.AWS_SES_SECRET_ACCESS_KEY ?? process.env.AWS_S3_SECRET_ACCESS_KEY;
 const sesFromEmail = "enquiry@raceautoindia.com";
-const sesToEmails = [
-  "info@raceautoindia.com",
-  "kh@raceinnovations.in",
-  "raceautoindia@gmail.com",
-  "mkt_research@raceinnovation.in"
-];
+const sesToEmails = [...INTERNAL_NOTIFICATION_RECIPIENTS];
 
 const sesClient =
   sesRegion && sesAccessKeyId && sesSecretAccessKey
