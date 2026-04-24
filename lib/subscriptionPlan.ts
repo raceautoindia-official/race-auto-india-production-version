@@ -76,12 +76,12 @@ export function getPlanTextClass(plan: any): string {
 }
 
 export function isPlanActive(subscriptionPack: any[] = []): boolean {
-  return (
-    Array.isArray(subscriptionPack) &&
-    subscriptionPack.length > 0 &&
-    subscriptionPack[0]?.status === "Active" &&
-    !!subscriptionPack[0]?.plan_name
-  );
+  const sub = Array.isArray(subscriptionPack) ? subscriptionPack[0] : undefined;
+  if (!sub) return false;
+  const statusOk = String(sub.status ?? "").toLowerCase() === "active";
+  const planOk = !!sub.plan_name && normalizePlanName(sub.plan_name) !== "none";
+  const endOk = sub.end_date ? new Date(sub.end_date).getTime() >= Date.now() : false;
+  return statusOk && planOk && endOk;
 }
 
 export function getActivePlanName(subscriptionPack: any[] = []): PlanName {

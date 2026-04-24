@@ -79,9 +79,7 @@ export async function GET(req: NextRequest) {
         [userId]
       );
 
-      history = (latestSubRows || [])
-        .filter((row: any) => String(row.status || "").toLowerCase() === "active")
-        .map((row: any) => ({
+      history = (latestSubRows || []).map((row: any) => ({
           id: `sub-${row.id}`,
           status: "Success" as const,
           planLabel: getPlanUITitle(String(row.plan_name || "none")),
