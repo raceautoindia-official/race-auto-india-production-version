@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Why Subscribe | Race Auto India",
+  // Brand suffix is added by the layout title template; do not repeat it here.
+  title: "Why Subscribe",
   description:
     "Why Race Auto India asks for your details when requesting premium automotive market intelligence access.",
 };

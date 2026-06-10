@@ -153,7 +153,7 @@ const Magazine_v2 = () => {
       </Swiper>
       <div className="container mb-5">
         <div className="row mb-4">
-          <h2 className="mt-4 my-4">Latest Edition</h2>
+          <h1 className="h2 mt-4 my-4">Latest Edition</h1>
           <Swiper
             pagination={true}
             autoplay={{

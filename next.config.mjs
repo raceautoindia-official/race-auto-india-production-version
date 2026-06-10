@@ -30,7 +30,9 @@ const nextConfig = {
       },
     ];
   },
-productionBrowserSourceMaps: true,
+// Source maps are only useful for debugging; shipping them to production
+// inflates total transfer size and exposes source. Disabled for perf.
+productionBrowserSourceMaps: false,
 
 images: {
   // ✅ Let Next.js optimize images (WebP/AVIF)

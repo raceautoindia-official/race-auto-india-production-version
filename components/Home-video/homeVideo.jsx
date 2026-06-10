@@ -17,6 +17,7 @@ function Vedio() {
             <iframe
               src="https://www.youtube.com/embed/OaMdY8yc2F8"
               title="YouTube video"
+              loading="lazy"
               allowFullScreen
             ></iframe>
           </div>

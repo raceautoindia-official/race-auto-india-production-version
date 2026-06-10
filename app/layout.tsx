@@ -103,7 +103,8 @@ export async function generateMetadata(): Promise<Metadata> {
     referrer: "origin-when-cross-origin",
 
     title: {
-      default: "Race Auto India | Car, Bike, EV & Commercial Vehicle News in India",
+      // Fallback title for pages without their own (kept under 60 chars for SEO).
+      default: "Race Auto India | Car, Bike, EV & CV News in India",
       template: "%s | Race Auto India",
     },
 

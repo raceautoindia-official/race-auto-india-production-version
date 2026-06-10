@@ -55,6 +55,9 @@ const EventPage = () => {
 
   return (
     <div className="container-fluid py-3 bg-dark" style={{color:'black'}}>
+      {/* Semantic top-level heading for SEO/accessibility (visually hidden to
+          preserve the existing hero layout). */}
+      <h1 className="visually-hidden">Automotive Events</h1>
       <EventSwiper />
 
       {/* Mobile Dropdowns */}

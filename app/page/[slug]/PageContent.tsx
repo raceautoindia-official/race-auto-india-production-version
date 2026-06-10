@@ -26,7 +26,7 @@ const PageContent = async ({ slug }: { slug: string }) => {
   return(
   <>
     <div className="container mb-4">
-      <h3 className="my-3">{data[0].title.toUpperCase()}</h3>
+      <h1 className="h3 my-3">{data[0].title.toUpperCase()}</h1>
       {parse(String(data[0].page_content))}
     </div>
     <div className="mb-3"></div>

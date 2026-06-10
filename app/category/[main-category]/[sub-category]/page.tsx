@@ -46,7 +46,8 @@ export async function generateMetadata({
   const name = await getCategoryDisplayName(slug);
 
   return buildPageMeta({
-    title: `${name} News in India | Race Auto India`,
+    // Brand suffix is added by the layout title template; do not repeat it here.
+    title: `${name} News in India`,
     description: `Latest ${name} news, launches, reviews and EV updates in India from Race Auto India.`,
     canonicalPath: `/sub-category/${slug}`, // ✅ change if your route is different
     keywords: [

@@ -61,6 +61,14 @@ const Footer = async () => {
     (item) => item.location == "footer" && item.visibility == 1
   );
 
+  // Auto-update the copyright year: replace any 4-digit year in the CMS string
+  // with the current year so the footer never goes stale (non-destructive — if
+  // the text has no year, it is left unchanged).
+  const copyrightText = (settingsData[0]?.copyright || "").replace(
+    /\b(19|20)\d{2}\b/,
+    String(new Date().getFullYear())
+  );
+
   return (
     <div className="footer mt-5 pb-2">
       <div className="container">
@@ -130,7 +138,7 @@ const Footer = async () => {
             <div className="col-12 col-md-auto ">
               <p className="ms-2 text-center px-1 my-2">
                 <FaCopyright className="mb-1" />{" "}
-                <b>{settingsData[0].copyright}</b>
+                <b>{copyrightText}</b>
               </p>
             </div>
             {pageVisible.map((item) => (

@@ -18,9 +18,6 @@ const ChatBot = dynamic(
   { ssr: false }
 );
 
-const UA_REGEX =
-  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-
 const PLAN_LABEL_TO_KEY = {
   'Individual Basic': 'bronze',
   'Individual Pro': 'silver',
@@ -41,6 +38,13 @@ const CHATBOT_RESUME_LOCK_KEY = 'floating_chatbot_purchase_resume_lock';
 
 const isValidEmail = (value) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim().toLowerCase());
+
+// Accepts 7-15 digits, allowing spaces, dashes, parentheses and an optional
+// leading "+" (covers Indian and international numbers).
+const isValidPhone = (value) => {
+  const digits = String(value || '').replace(/[^\d]/g, '');
+  return digits.length >= 7 && digits.length <= 15;
+};
 
 const formatSubscriptionDate = (dateValue) => {
   if (!dateValue) return null;
@@ -85,12 +89,9 @@ const FloatingChatBot = () => {
   const [purchaseStatusMessage, setPurchaseStatusMessage] = useState('');
 
   const [enquiryTopic, setEnquiryTopic] = useState('General enquiry');
-
-  const isDesktop = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    const ua = navigator?.userAgent ?? '';
-    return !UA_REGEX.test(ua);
-  }, []);
+  // Holds the email between the email step and the follow-up phone step so the
+  // enquiry can be submitted with both contact details.
+  const [enquiryEmail, setEnquiryEmail] = useState('');
 
   const latestNewsMessage = useMemo(() => {
     if (!latestNews.length) {
@@ -137,11 +138,14 @@ const FloatingChatBot = () => {
     setSelectedAmount(getPriceFromRows(subscriptionRows, plan, resolvedCycle));
   };
 
-  const submitEnquiryEmail = async (email) => {
+  const submitEnquiryEmail = async (email, phone = '') => {
+    const trimmedPhone = String(phone || '').trim();
     const payload = {
       name: 'Chatbot Enquiry',
       email,
-      message: `Chatbot enquiry type: ${enquiryTopic}`,
+      message: `Chatbot enquiry type: ${enquiryTopic}${
+        trimmedPhone ? `\nContact phone: ${trimmedPhone}` : ''
+      }`,
     };
 
     await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/contact`, payload);
@@ -413,7 +417,7 @@ const FloatingChatBot = () => {
     header: { title: 'Race Team', showAvatar: true, avatar: '/images/chat-bot-icon.webp' },
     chatButton: { icon: '/images/chat-bot-icon.webp' },
     notification: { volume: 0.1 },
-    chatWindow: { defaultOpen: isDesktop },
+    chatWindow: { defaultOpen: false },
     footer: { text: 'RACE EDITORIALE' },
     fileAttachment: { disabled: true },
     emoji: { disabled: true },
@@ -684,8 +688,27 @@ const FloatingChatBot = () => {
           return 'invalid_enquiry_email';
         }
 
+        setEnquiryEmail(email);
+        return 'ask_enquiry_phone';
+      },
+    },
+
+    invalid_enquiry_email: {
+      message: 'That email looks invalid. Please enter a valid email address.',
+      path: 'ask_enquiry_email',
+    },
+
+    ask_enquiry_phone: {
+      message:
+        'Please share your phone number as well so our team can reach you faster.',
+      path: async (params) => {
+        const phone = String(params.userInput || '').trim();
+        if (!isValidPhone(phone)) {
+          return 'invalid_enquiry_phone';
+        }
+
         try {
-          await submitEnquiryEmail(email);
+          await submitEnquiryEmail(enquiryEmail, phone);
           toast.success('Enquiry submitted successfully. Our team will contact you soon.');
           return 'enquiry_sent';
         } catch {
@@ -694,9 +717,9 @@ const FloatingChatBot = () => {
       },
     },
 
-    invalid_enquiry_email: {
-      message: 'That email looks invalid. Please enter a valid email address.',
-      path: 'ask_enquiry_email',
+    invalid_enquiry_phone: {
+      message: 'That phone number looks invalid. Please enter a valid phone number.',
+      path: 'ask_enquiry_phone',
     },
 
     enquiry_sent: {
@@ -793,18 +816,13 @@ const FloatingChatBot = () => {
         'Please share your email so we can route your query to the right team and respond quickly.',
       path: async (params) => {
         const email = String(params.userInput || '').trim().toLowerCase();
+        setEnquiryTopic('General enquiry');
         if (!isValidEmail(email)) {
-          setEnquiryTopic('General enquiry');
           return 'invalid_enquiry_email';
         }
 
-        setEnquiryTopic('General enquiry');
-        try {
-          await submitEnquiryEmail(email);
-          return 'enquiry_sent';
-        } catch {
-          return 'enquiry_failed';
-        }
+        setEnquiryEmail(email);
+        return 'ask_enquiry_phone';
       },
     },
 

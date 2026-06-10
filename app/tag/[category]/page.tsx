@@ -17,7 +17,8 @@ export async function generateMetadata({
   const tagName = cleanText(raw.replace(/-/g, " "));
 
   return buildPageMeta({
-    title: `${tagName} News | Race Auto India`,
+    // Brand suffix is added by the layout title template; do not repeat it here.
+    title: `${tagName} News`,
     description: `Latest ${tagName} news, updates, launches and insights in India from Race Auto India.`,
     canonicalPath: `/tag/${params.category}`,
     keywords: [

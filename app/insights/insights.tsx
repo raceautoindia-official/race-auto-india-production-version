@@ -87,7 +87,7 @@ export default function InsightsListPage() {
       <Row>
         {/* Main 8-column area */}
         <Col md={8}>
-          <h3 className="mb-3">All Insights</h3>
+          <h1 className="h3 mb-3">All Insights</h1>
 
           <input
             type="text"

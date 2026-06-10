@@ -2,6 +2,7 @@ import React from "react";
 import Post, { postType } from "./post";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { absUrl } from "@/lib/seo";
@@ -66,7 +67,9 @@ export async function generateMetadata({
       : [];
 
   return buildPageMeta({
-    title: `${title} | Race Auto India`,
+    // Layout applies the "%s | Race Auto India" template, so the brand suffix
+    // must NOT be repeated here (was rendering "… | Race Auto India | Race Auto India").
+    title,
     description,
     canonicalPath: `/post/${slug}`,
     keywords: kw,
@@ -81,6 +84,12 @@ const PostPage = async ({ params }: { params: { title_slug: string } }) => {
   const token = cookieStore.get("authToken");
 
   const post = await fetchPost(slug);
+
+  // ✅ Return a proper 404 (instead of a 500 / blank article shell) when the
+  // slug does not resolve to a real article.
+  if (!post) {
+    notFound();
+  }
 
   // ✅ JSON-LD only if we have post data
   const articleLd =

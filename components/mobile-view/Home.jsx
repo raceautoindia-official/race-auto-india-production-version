@@ -70,6 +70,11 @@ const mobileHome = async () => {
   return (
     <>
       <MobileNavNew />
+      {/* Single semantic H1 for SEO/accessibility (visually hidden so the
+          mobile hero layout is unchanged). */}
+      <h1 className="visually-hidden">
+        Latest Automobile News in India
+      </h1>
       <div className="container-fluid mt-5">
         {sliderType == 1 ? (
           <HomeBanner />

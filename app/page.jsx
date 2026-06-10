@@ -3,9 +3,12 @@ import { headers } from "next/headers";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Race Auto India | Car, Bike & CV News, Reviews, Launches and EV Updates",
+  // `absolute` keeps the title exactly as written (the layout's
+  // "%s | Race Auto India" template is NOT appended), and trimmed to ~55 chars
+  // for the 50-60 character SEO sweet spot.
+  title: { absolute: "Race Auto India | Car, Bike, Truck & EV News in India" },
   description:
-    "Latest automobile news in India: cars, bikes, commercial vehicles, trucks, buses, tractors, EV launches, reviews, comparisons, prices, and industry insights from Race Auto India.",
+    "Latest automobile news in India — cars, bikes, trucks, buses, tractors, EV launches, reviews, prices and industry insights from Race Auto India.",
   keywords: [
     "Race Auto India",
     "automobile news India",
@@ -24,10 +27,9 @@ export const metadata = {
   ],
   alternates: { canonical: "/" },
   openGraph: {
-    title:
-      "Race Auto India | Car, Bike & CV News, Reviews, Launches and EV Updates",
+    title: "Race Auto India | Car, Bike, Truck & EV News in India",
     description:
-      "Latest automobile news in India: cars, bikes, commercial vehicles, trucks, buses, tractors, EV launches, reviews, comparisons, prices, and industry insights from Race Auto India.",
+      "Latest automobile news in India — cars, bikes, trucks, buses, tractors, EV launches, reviews, prices and industry insights from Race Auto India.",
     url: "/",
     type: "website",
   },

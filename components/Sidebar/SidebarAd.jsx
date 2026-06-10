@@ -19,7 +19,7 @@ export default function SidebarAdSwiper() {
 
   useEffect(() => {
     axios
-      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/adspace/sidebar-ads`)
+      .get(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/adspace/sidebar-ads`)
       .then(res => setAds(res.data))
       .catch(err => console.error('Sidebar ad load failed', err))
       .finally(() => setLoad(false));
