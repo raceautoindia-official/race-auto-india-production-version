@@ -77,7 +77,10 @@ export async function GET(req: NextRequest) {
 
     if (userId) {
       const [ownRows]: any = await db.execute(
-        `SELECT plan_name FROM subscriptions
+        // NOTE: end_date MUST be selected — isEffectivelyActive() checks it below.
+        // Selecting only plan_name left directPlanEndDate null, so every direct
+        // subscriber was reported isSubscribed:false / effectiveStatus:"free".
+        `SELECT plan_name, end_date FROM subscriptions
          WHERE user_id = ? AND LOWER(status) = 'active' AND start_date <= NOW() AND end_date >= NOW()
          ORDER BY end_date DESC
          LIMIT 1`,
