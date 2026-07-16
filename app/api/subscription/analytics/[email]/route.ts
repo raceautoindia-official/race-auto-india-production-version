@@ -2,6 +2,9 @@ import db from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
 
+// Entitlement is live per-request — never let Next or any CDN cache it.
+export const dynamic = "force-dynamic";
+
 function getEffectiveStatus(status: any, endDate: any): "active" | "expired" | "free" {
   const statusValue = String(status || "").toLowerCase().trim();
   if (statusValue !== "active") return statusValue === "free" ? "free" : "expired";

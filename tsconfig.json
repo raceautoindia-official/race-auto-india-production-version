@@ -61,7 +61,6 @@
     "app/magazine/old/FlipBook_v2.jsx",
     "components/Sidebar/ExclusiveNewsList.jsx",
     "app/test/components/OTPLogin.jsx",
-    "app/api/admin/subscription/subscribers/[id]/route.js",
     "app/test/components/ImageNode.jsx",
     "app/test/components/TextEditor.tsx",
     "app/test/components/ExampleTheme.jsx",

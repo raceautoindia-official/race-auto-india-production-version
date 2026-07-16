@@ -2,6 +2,9 @@ import db from "@/lib/db";
 import { checkInternalApiKey } from "@/lib/internalAuth";
 import { NextRequest, NextResponse } from "next/server";
 
+// Entitlement is live per-request — never let Next or any CDN cache it.
+export const dynamic = "force-dynamic";
+
 function isEffectivelyActive(status: any, endDate: any): boolean {
   const statusValue = String(status || "").toLowerCase().trim();
   if (statusValue !== "active") return false;

@@ -75,12 +75,14 @@ function SubscriptionProfile({ token }: { token: any }) {
     }
   }, [subscriptionPack, subscription]);
 
+  // Normalize status casing — writers use 'Active' but any case must read correctly.
+  const rawStatus = String(subscriptionPack[0]?.status ?? "").toLowerCase();
   const currentPlan =
-    subscriptionPack.length === 0 || subscriptionPack[0]?.status === "expired"
+    subscriptionPack.length === 0 || rawStatus === "expired"
       ? "none"
       : subscriptionPack[0]?.plan_name;
-  const isActive = subscriptionPack[0]?.status === "Active";
-  const isExpired = subscriptionPack[0]?.status === "expired";
+  const isActive = rawStatus === "active";
+  const isExpired = rawStatus === "expired";
   const hasPastSubscription = subscriptionPack.length > 0;
 
   const planDetails = useMemo(

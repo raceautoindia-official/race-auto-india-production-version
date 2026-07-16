@@ -95,6 +95,10 @@ const RazorpayPaymentForm: React.FC<RazorpayPaymentFormProps> = ({
         {
           customer_email: email,
           AMT: planInfo.price,
+          // Carried into the order so the webhook can activate the right plan
+          // if the browser never returns to verify-payment.
+          plan: planInfo.planTier,
+          duration: planInfo.billingCycle,
         }
       );
 
