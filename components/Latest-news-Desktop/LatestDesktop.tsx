@@ -32,13 +32,15 @@ export default async function LatestNewsDesktop() {
         {newsItems.map((item) => (
           <div className="col-md-6 mb-4" key={item.id}>
             <div className="border-bottom pb-2">
+              {/* md (not lg) so tablet widths keep the text | image split
+                  instead of stacking text above a full-width image. */}
               <div className="row g-2 align-items-center">
-                <div className="col-lg-7">
+                <div className="col-md-7">
                   <h6 className="fw-semibold mb-1 latest-title">{item.title}</h6>
                   <p className="mb-0 small latest-summary">{item.summary}</p>
                 </div>
 
-                <div className="col-lg-5">
+                <div className="col-md-5">
                   <Link href={`/post/${item.title_slug}`}>
                     <div
                       className="latest-image"
@@ -55,7 +57,7 @@ export default async function LatestNewsDesktop() {
                         className="rounded"
                         style={{ objectFit: "cover" }}
                         quality={60}
-                        sizes="(max-width: 992px) 50vw, 260px"
+                        sizes="(max-width: 768px) 100vw, (max-width: 992px) 40vw, 260px"
                       />
                     </div>
                   </Link>

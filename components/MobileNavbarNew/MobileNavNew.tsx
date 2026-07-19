@@ -445,7 +445,6 @@ const MobileNavNew = () => {
               <span className={styles.caption}>Forecast</span>
             </div>
           </Link>
-onClick=handleToggle
 <Link href="/subscription">
           <div className={styles.navItem} >   
             <FiCreditCard
