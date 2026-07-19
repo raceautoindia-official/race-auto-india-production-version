@@ -29,7 +29,7 @@ const services = [
 
 function Caurosel() {
   return (
-    <div style={{ maxWidth: '380px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px' }}>
       <h4 style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: '20px' }}>
         Our Services
       </h4>
@@ -41,6 +41,12 @@ function Caurosel() {
         autoplay={{ delay: 3000, disableOnInteraction: false }}
         pagination={{ clickable: true }}
         style={{ paddingBottom: '40px' }}
+        // Phones show 1 card; tablets/landscape show 2–3 so the cards fill the
+        // width instead of one tiny card stranded in the middle.
+        breakpoints={{
+          576: { slidesPerView: 2 },
+          992: { slidesPerView: 3 },
+        }}
       >
         {services.map((service, idx) => (
           <SwiperSlide key={idx}>

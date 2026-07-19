@@ -102,7 +102,7 @@ const mobileHome = async () => {
       </div>
       <div
         className="mt-1"
-        style={{ position: "relative", aspectRatio: "1/1", width: "100%" }}
+        style={{ position: "relative", aspectRatio: "1/1", width: "100%", maxWidth: 480, marginInline: "auto" }}
       >
         <Link href={sidebartopData[0].link || 'https://raceautoindia.com/'}>
           <Image
@@ -117,7 +117,7 @@ const mobileHome = async () => {
       <ReactPlayer_Server />
       <div
         className="mt-1"
-        style={{ position: "relative", aspectRatio: "1/1", width: "100%" }}
+        style={{ position: "relative", aspectRatio: "1/1", width: "100%", maxWidth: 480, marginInline: "auto" }}
       >
         <Link href={sidebarbottomData[0].link || 'https://raceautoindia.com/'}>
           <Image

@@ -37,6 +37,8 @@ async function View() {
             position: "relative",
             aspectRatio: "1/1.414",
             width: "100%",
+            maxWidth: 400,
+            marginInline: "auto",
           }}
         >
           <Image

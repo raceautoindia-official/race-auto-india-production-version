@@ -15,19 +15,23 @@ const Exclusive = ({ value }) => {
         style={{ backgroundColor: "#EAEAEA" }}
       >
 
+        {/* col-12 keeps phones one-per-row as before; col-md-6 gives tablets
+            two balanced cards per row. The grid column is now the Link's
+            parent (previously the col-12 was INSIDE the Link, so the row's
+            direct children weren't columns and the grid never applied). */}
         <div className="row g-3">
-          {value?.slice(0, 4).map((item, index, array) => {
+          {value?.slice(0, 4).map((item, index) => {
             const title = truncateTitle(item.title || "Untitled News");
             const title_slug = item.title_slug;
             const imageSrc = item.image_mid
               ? `${process.env.NEXT_PUBLIC_S3_BUCKET_URL}${item.image_mid}`
               : "/default.png";
             return (
-              <Link href={`/post/${title_slug}`} key={index}>
-                <div className="col-12">
-                  <div className="row g-0 align-items-center border rounded">
+              <div className="col-12 col-md-6" key={index}>
+                <Link href={`/post/${title_slug}`} className="link-style">
+                  <div className="row g-0 align-items-center border rounded h-100">
                     <div className="col-6">
-                      <h6 className="mb-0 pe-3" style={{ fontWeight: 700 }}>{title}</h6>
+                      <h6 className="mb-0 px-2" style={{ fontWeight: 700 }}>{title}</h6>
                     </div>
                     <div className="col-6">
                       <div
@@ -41,7 +45,7 @@ const Exclusive = ({ value }) => {
                           src={imageSrc}
                           alt={item.title || "news image"}
                           fill
-                          sizes="(max-width: 768px) 100vw, 50vw"
+                          sizes="(max-width: 768px) 50vw, 25vw"
                           style={{ objectFit: "cover" }}
                           className="rounded"
                           unoptimized={false}
@@ -49,13 +53,8 @@ const Exclusive = ({ value }) => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Add a divider below each post except the last one */}
-                  {index < array.length - 1 && (
-                    <hr style={{ borderTop: "2px solid #333", margin: "0" }} />
-                  )}
-                </div>
-              </Link>
+                </Link>
+              </div>
             );
           })}
         </div>
