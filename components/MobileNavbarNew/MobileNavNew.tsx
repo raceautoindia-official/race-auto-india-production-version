@@ -18,7 +18,13 @@ import PricingPlans from "../SubscriptionMobile/MobileCardSub";
 import subscriptionStyles from "@/components/SubscriptionMobile/styles/subscriptionDropdown.module.css";
 import { BiLineChart } from "react-icons/bi"; // Add this at the top
 
-const MobileNavNew = () => {
+// alwaysVisible: the homepage chooses mobile-vs-desktop by USER-AGENT, but this
+// navbar hides itself by WIDTH (>=1000px) so it doesn't duplicate the desktop
+// Navbar_V2 on wide desktop layouts. That width rule also wrongly hid the navbar
+// on tablets in landscape (>=1000px) that were served the mobile view. The
+// mobile-view layout passes alwaysVisible so the navbar stays put at every
+// width; the desktop layout omits it and keeps the >=1000px hide.
+const MobileNavNew = ({ alwaysVisible = false }: { alwaysVisible?: boolean }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [subscriptionMenuVisible, setSubscriptionMVisible] = useState(false);
 
@@ -135,7 +141,12 @@ const MobileNavNew = () => {
 
   return (
     <>
-      <div className={styles.mobile_navbar} style={{ color: "black" }}>
+      <div
+        className={`${styles.mobile_navbar}${
+          alwaysVisible ? ` ${styles.always_visible}` : ""
+        }`}
+        style={{ color: "black" }}
+      >
         <div
           style={{
             position: "fixed",

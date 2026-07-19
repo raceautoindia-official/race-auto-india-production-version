@@ -69,7 +69,7 @@ const mobileHome = async () => {
 
   return (
     <>
-      <MobileNavNew />
+      <MobileNavNew alwaysVisible />
       {/* Single semantic H1 for SEO/accessibility (visually hidden so the
           mobile hero layout is unchanged). */}
       <h1 className="visually-hidden">

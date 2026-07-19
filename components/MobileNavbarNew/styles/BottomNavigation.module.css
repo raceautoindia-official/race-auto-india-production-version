@@ -103,4 +103,11 @@
   .mobile_navbar {
     display: none;
   }
+
+  /* The UA-routed mobile view (incl. tablets in landscape >=1000px) opts in
+     via alwaysVisible so its navbar isn't hidden by the desktop-only rule
+     above. Two-class selector outranks .mobile_navbar, so no !important. */
+  .mobile_navbar.always_visible {
+    display: block;
+  }
 }

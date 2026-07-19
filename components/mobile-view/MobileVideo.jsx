@@ -6,34 +6,38 @@ const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
 const MobileVideo = () => {
   return (
-    <div
-      style={{
-        position: "relative",
-        paddingTop: "56.25%", // 16:9 Aspect Ratio (for responsive height)
-      }}
-    >
-      <ReactPlayer
-        url="https://youtu.be/bcsHCDUXlLk?si=HKhhVvE6rZYRAhv6"
-        controls
-        playing
-        muted
-        loop
-        width="100%"
-        height="100%"
+    // Cap the width and center so a full-width 16:9 video doesn't dominate the
+    // screen on tablets / landscape; phones (<800px) stay full-width.
+    <div style={{ maxWidth: 800, margin: "0 auto" }}>
+      <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
+          position: "relative",
+          paddingTop: "56.25%", // 16:9 Aspect Ratio (for responsive height)
         }}
-        config={{
-          file: {
-            attributes: {
-              autoPlay: true,
-              muted: true,
+      >
+        <ReactPlayer
+          url="https://youtu.be/bcsHCDUXlLk?si=HKhhVvE6rZYRAhv6"
+          controls
+          playing
+          muted
+          loop
+          width="100%"
+          height="100%"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
+          config={{
+            file: {
+              attributes: {
+                autoPlay: true,
+                muted: true,
+              },
             },
-          },
-        }}
-      />
+          }}
+        />
+      </div>
     </div>
   );
 };
