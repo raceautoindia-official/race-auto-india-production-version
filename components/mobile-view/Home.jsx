@@ -101,7 +101,7 @@ const mobileHome = async () => {
       </div>
       <div
         className="mt-1"
-        style={{ position: "relative", aspectRatio: "1/1", width: "100%", maxWidth: 480, marginInline: "auto" }}
+        style={{ position: "relative", aspectRatio: "1/1", width: "100%" }}
       >
         <Link href={sidebartopData[0].link || 'https://raceautoindia.com/'}>
           <Image
@@ -118,7 +118,7 @@ const mobileHome = async () => {
           MainComponent (a narrower column where it fits). */}
       <div
         className="mt-1"
-        style={{ position: "relative", aspectRatio: "1/1", width: "100%", maxWidth: 480, marginInline: "auto" }}
+        style={{ position: "relative", aspectRatio: "1/1", width: "100%" }}
       >
         <Link href={sidebarbottomData[0].link || 'https://raceautoindia.com/'}>
           <Image
