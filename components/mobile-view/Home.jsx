@@ -10,7 +10,6 @@ import View from "./View";
 import Caurosel from "./Caurosel";
 import HomeMarket from "./Market";
 import HomeCategories from "@/components/HomeCategories/HomeCategories";
-import ReactPlayer_Server from "./ReactPlayerVideo";
 import Link from "next/link";
 import Image from "next/image";
 import LinkedinPage from "@/components/LinkedinForm/LinkedinPage";
@@ -114,7 +113,9 @@ const mobileHome = async () => {
         </Link>
       </div>
       <View />
-      <ReactPlayer_Server />
+      {/* Intro video removed from the mobile/tablet view — its 16:9 ratio did
+          not fit these layouts. The desktop keeps its own video via
+          MainComponent (a narrower column where it fits). */}
       <div
         className="mt-1"
         style={{ position: "relative", aspectRatio: "1/1", width: "100%", maxWidth: 480, marginInline: "auto" }}
